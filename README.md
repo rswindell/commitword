@@ -11,8 +11,10 @@ threats49thirty4carbon  →  a three-word code (rare; for the few that need it)
 A *commitword* is an all-lowercase code like `inner19sage`: two (or, rarely, three)
 words joined by a number. It is **memorable**, **case-insensitive**,
 **self-verifying**, and — minted against a repo — **guaranteed to resolve to
-exactly one commit** in that repo. It is **lossy**: you recover the commit by
-searching a repo, not by reversing the code.
+exactly one commit** there as of mint time (the same kind of guarantee an
+abbreviated SHA carries; see [Guarantees and caveats](#guarantees-and-caveats)).
+It is **lossy**: you recover the commit by searching a repo, not by reversing
+the code.
 
 ## Why
 
@@ -39,8 +41,8 @@ a blob.
 A commitword fixes that. `inner19sage` you can say out loud, read off a slide, or
 type into anything without squinting — then resolve back to the exact commit with
 `commitfind`. The encoder has the repo in hand at mint time, so it picks the
-*shortest* code that's still unique among the repo's commits, and verifies it
-before handing it back.
+*shortest* code that's still unique among the repo's commits at mint time, and
+verifies it before handing it back.
 
 And unlike a git **tag** — the usual way to pin a friendly name on a commit — a
 commitword costs nothing to create or hand out: there's no ref to `git tag`,
@@ -107,8 +109,9 @@ third word, e.g. `threats49thirty4carbon`.
 
 ## Guarantees and caveats
 
-- **Unique within the repo** it was minted against — resolves to exactly one
-  commit, by construction and verified at mint time.
+- **Unique within the ref scope it was minted over** — by construction, and
+  verified at mint time, the code resolves to exactly one commit among those
+  reachable from all refs (`git rev-list --all`) in the repo when it was minted.
 - **Self-verifying** — a code carries the bits it claims; given a candidate SHA
   you can confirm the match offline, no repo needed.
 - **Case-insensitive** — `Inner19Sage` == `inner19sage`.
@@ -119,8 +122,15 @@ third word, e.g. `threats49thirty4carbon`.
   only resolvable with that same hash. See the spec.
 - **Lossy** — you find the commit by searching a repo; you cannot reconstruct a
   full SHA from the code alone.
-- **Scope matters** — uniqueness is guaranteed within the ref scope it was minted
-  over (all refs). Resolve over the same scope to get the single match.
+- **Scope- and point-in-time-relative** — the uniqueness guarantee covers the
+  commits the minter could see: all refs in that clone, at mint time. It is *not* global or
+  permanent. Commits the minter never saw — a branch that lives only in another
+  clone, or commits added later — can collide, exactly as an abbreviated SHA
+  (`d2a6dcb`) that is unique in your clone today can turn ambiguous in another
+  clone or as history grows. The uniqueness is about on par with git's
+  abbreviated SHAs. To resolve deterministically, search a scope that includes
+  the commit and is at least as wide as the mint scope: `commitfind` defaults to
+  all refs to match the minter, and `--head-only` narrows it.
 
 ## Configuration
 
@@ -138,7 +148,7 @@ portability: codes minted under a non-default hash resolve only under that hash.
 - `commitword.py` — the encode/decode/verify library + a standalone CLI.
 - `commitmint.py` — repo-aware minter (the main entry point).
 - `commitfind.py` — reverse lookup (code → commit).
-- `curated.txt` — the ~6,368-word canonical wordlist.
+- `curated.txt` — the 6,368-word canonical wordlist.
 - `curate.py` / `blocklist.txt` — regenerate `curated.txt` (curation + exclusions).
 
 ## Prior art
@@ -156,7 +166,7 @@ commitword optimizes for different things:
 |---|---|---|
 | mechanism | hash → index → word (positional) | pick words whose hash matches SHA bits |
 | words per SHA | fixed 4 | 2 (≈0.16% need 3) |
-| repo-unique | no (can collide) | yes — single-commit guarantee |
+| single-commit in mint scope | no (can collide) | yes — by construction, verified |
 | self-verifying | no | yes (offline, no repo) |
 | reverse to commit | no | yes (`commitfind`), and needs no wordlist |
 | reads like | a phrase | a compact token |

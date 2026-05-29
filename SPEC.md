@@ -127,6 +127,10 @@ K_SPAN = 9      ; = K_MAX - K_MIN + 1
 M_MIN = 8       ; minimum bits pinned by word 3
 ```
 
+(The reference minter also bounds `m ≤ 24` while searching for a third word;
+this is a minting-search limit, not a decode constraint — see §4.2, where `m`
+has no maximum.)
+
 `y` = bits pinned by word 1, `k` = bits pinned by word 2, `m` = bits pinned by
 word 3 (three-word form only).
 
