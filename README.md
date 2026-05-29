@@ -28,6 +28,14 @@ on a call or in standup, reading it off one screen to type into another, getting
 it onto a phone or a detached box with no shared clipboard, or dictating it into
 a ticket. Forty hex characters are hostile to every channel that isn't a paste.
 
+Abbreviating helps, but only on one axis. That git shortens SHAs at all —
+`git show d2a6dcb` — is proof that length is a real burden; nobody abbreviates
+what doesn't hurt. But seven characters of random hex are no more sayable,
+memorable, or dictatable than the full forty. Abbreviation solves the length;
+it leaves the other problem untouched — hex doesn't survive a voice call, a
+glance between two screens, or a retype without a slip. A shorter blob is still
+a blob.
+
 A commitword fixes that. `inner19sage` you can say out loud, read off a slide, or
 type into anything without squinting — then resolve back to the exact commit with
 `commitfind`. The encoder has the repo in hand at mint time, so it picks the
@@ -53,15 +61,24 @@ Python 3, standard library only. No install step.
 ./commitmint.py <sha-or-ref> --repo /path/to/repo
 # e.g.
 ./commitmint.py HEAD --repo .
-./commitmint.py v3.21 --repo ~/sbbs
+./commitmint.py v3.21 --repo ~/repo
 ```
 
 **Resolve** a code back to its commit(s):
 
 ```sh
-./commitfind.py inner19sage --repo ~/sbbs
+./commitfind.py inner19sage --repo ~/repo
 # searches all refs by default; --head-only restricts to HEAD's history
 ```
+
+Resolving a short handle to a unique commit is not new — git already does it
+natively for abbreviated SHAs, tags, branches, and `name-rev`. `commitfind`
+applies the same idea to a word code: it scans the repo, matches the bits each
+word pins, and confirms a single commit. It exists only because git doesn't
+*yet* understand the commitword format — a commitword isn't a hex prefix, so
+`git show inner19sage` can't resolve it the way `git show d2a6dcb` can. If git
+learned the format, resolution would be built in and `commitfind` would be
+unnecessary, exactly as abbreviated-SHA lookup already is.
 
 **Standalone encode** (no repo — joint-maximizes bits, does not guarantee
 repo-uniqueness):
@@ -83,7 +100,7 @@ Take `inner19sage`:
 
 The number is not part of the SHA; it is bookkeeping. `19` here means word 1
 pins 12 bits and word 2 pins 11 bits, for 23 identifying bits total — enough to
-single out one commit in a ~49k-commit repo with comfortable growth headroom.
+single out one commit in a ~50k-commit repo with comfortable growth headroom.
 
 A few commits (~0.16% in a large repo) have no unique two-word code; those get a
 third word, e.g. `threats49thirty4carbon`.

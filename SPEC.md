@@ -231,7 +231,7 @@ L_req = ⌈ log2(M) + log2(growth / pmax) ⌉
 
 where `M` = number of commits, `growth` = assumed future growth factor
 (default 16), `pmax` = tolerated future-collision probability (default 0.1). The
-floor is also clamped to at least `Y_MIN + K_MIN = 20` bits. For a ~49k-commit
+floor is also clamped to at least `Y_MIN + K_MIN = 20` bits. For a ~50k-commit
 repo this is ≈ 23 bits.
 
 The floor is a **soft preference**, not a hard gate: a short code that is already
