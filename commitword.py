@@ -50,22 +50,21 @@ def load_words(path=WORDLIST_PATH):
     return words
 
 
+def _leading_bits(digest, nbits):
+    """First `nbits` of a big-endian byte string, as a left-aligned int."""
+    n_bytes = (nbits + 7) // 8
+    v = int.from_bytes(digest[:n_bytes], "big")
+    return v >> (n_bytes * 8 - nbits)
+
+
 def hash_bits(word, nbits=64):
     """Return the first nbits of HASH_NAME(word) as an int (left-aligned)."""
-    h = hashlib.new(HASH_NAME, word.encode()).digest()
-    n_bytes = (nbits + 7) // 8
-    v = int.from_bytes(h[:n_bytes], "big")
-    excess = n_bytes * 8 - nbits
-    return v >> excess
+    return _leading_bits(hashlib.new(HASH_NAME, word.encode()).digest(), nbits)
 
 
 def sha_to_bits(sha_hex, nbits):
     """First nbits of a hex string, as int."""
-    h = bytes.fromhex(sha_hex)
-    n_bytes = (nbits + 7) // 8
-    v = int.from_bytes(h[:n_bytes], "big")
-    excess = n_bytes * 8 - nbits
-    return v >> excess
+    return _leading_bits(bytes.fromhex(sha_hex), nbits)
 
 
 def common_prefix_bits(a, b, max_bits):
@@ -152,7 +151,12 @@ def select_words(cand_lists, rank, key=None):
 
 
 def encode(sha_hex, words, rank=None, whash=None):
-    """Standalone (no-repo) two-word encode. Return (w1, y, w2, k) or None."""
+    """Standalone (no-repo) two-word encode. Return (w1, y, w2, k) or None.
+
+    Best-effort: it joint-maximizes bits and lets select_words avoid an all-hex
+    pair, but does not guarantee repo-uniqueness or re-verify its output. The
+    guaranteed path is commitmint.mint, which checks uniqueness and decode-
+    verifies (enforcing hex-safety) before returning."""
     if rank is None:
         rank = {w: i for i, w in enumerate(words)}
     if whash is None:

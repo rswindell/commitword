@@ -14,6 +14,13 @@ import sys
 
 import commitword as sw
 
+# Cap on the word-1 prefix bits (`y`) the two-word search scans. `ybest`, the
+# best single-word match against the SHA, is almost never large -- a word
+# sharing >45 leading bits has probability ~ len(words) * 2^-45, vanishing -- so
+# this only bounds the loop defensively. Any code pinning near 45 bits is far
+# past every realistic growth-margin floor anyway.
+Y_SEARCH_MAX = 45
+
 
 def repo_shas(repo):
     out = subprocess.check_output(["git", "-C", repo, "rev-list", "--all"], text=True)
@@ -120,7 +127,7 @@ def mint(sha_hex, shas, words, rank, whash, growth=16.0, pmax=0.1):
     # preference, not a hard gate: a short unique sub-floor code beats growing a
     # third word just to reach the floor. Uniqueness is the only hard rule.
     best = None              # (floor?, len(code), allit?, dbl-plural?, -total, ranks, code)
-    for y in range(sw.Y_MIN, min(ybest, 45) + 1):
+    for y in range(sw.Y_MIN, min(ybest, Y_SEARCH_MAX) + 1):
         w1pool = [w for w in words if ml0[w] >= y]
         if not w1pool:
             continue
