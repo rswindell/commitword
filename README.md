@@ -122,6 +122,13 @@ third word, e.g. `threats49thirty4carbon`.
   only resolvable with that same hash. See the spec.
 - **Lossy** — you find the commit by searching a repo; you cannot reconstruct a
   full SHA from the code alone.
+- **Not a security primitive** — a commitword pins only a prefix of bits (~23 for
+  a two-word code), so it is *not* collision-resistant: an adversary can cheaply
+  craft a commit that matches a given code (≈ `2^total` hashes — seconds for a
+  two-word code). "Self-verifying" means a candidate SHA can be checked against
+  the code offline, not that the code is tamper-evident. Like an abbreviated SHA,
+  it's a convenience handle for honest use; rely on a full SHA or a signed tag
+  where authenticity matters.
 - **Scope- and point-in-time-relative** — the uniqueness guarantee covers the
   commits the minter could see: all refs in that clone, at mint time. It is *not* global or
   permanent. Commits the minter never saw — a branch that lives only in another
@@ -166,7 +173,7 @@ commitword optimizes for different things:
 |---|---|---|
 | mechanism | hash → index → word (positional) | pick words whose hash matches SHA bits |
 | words per SHA | fixed 4 | 2 (≈0.16% need 3) |
-| single-commit in mint scope | no (can collide) | yes — by construction, verified |
+| repo-unique | no (can collide) | yes, within mint scope |
 | self-verifying | no | yes (offline, no repo) |
 | reverse to commit | no | yes (`commitfind`), and needs no wordlist |
 | reads like | a phrase | a compact token |
