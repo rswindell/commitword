@@ -98,14 +98,23 @@ def choose_pair(w1pool, w2pool, rank, wordset):
     return (a, b, allit, dbl)
 
 
-def mint(sha_hex, shas, words, rank, whash, growth=16.0, pmax=0.1, min_words=2):
+def mint(sha_hex, shas, words, rank, whash, growth=16.0, pmax=0.1, min_words=2,
+         reach_floor=False):
     """Shortest unique-in-`shas` code for `sha_hex` that clears the growth-margin
     floor. `shas` must include `sha_hex`.
 
-    `min_words=3` forces a (maximum-bit) three-word code even when a unique
-    two-word code exists, for extra future-collision headroom. The default 2
-    uses two words when possible and grows a third only when no unique two-word
-    code exists."""
+    Two independent ways to spend a third word for more future-collision
+    headroom:
+    - `min_words=3` forces a (maximum-bit) three-word code unconditionally, even
+      when a unique two-word code exists.
+    - `reach_floor=True` promotes the otherwise-soft margin floor to a gate:
+      grow a third word *only when* the best unique two-word code sits below the
+      floor (`--growth`/`--pmax` set where the floor is). If a three-word code
+      can't be built, the unique sub-floor two-word code is kept.
+
+    With both defaults (min_words=2, reach_floor=False) the floor stays a soft
+    preference: two words when possible, three only when no unique two-word code
+    exists."""
     floor = max(margin_floor(len(shas), growth, pmax), sw.Y_MIN + sw.K_MIN)
     target = sw.sha_to_bits(sha_hex, sw.PROBE)
     ml0 = {w: sw.match_len_at(whash[w], target, 0) for w in words}
@@ -159,20 +168,26 @@ def mint(sha_hex, shas, words, rank, whash, growth=16.0, pmax=0.1, min_words=2):
                         -total, rank[w1] + rank[w2], code)
                 if best is None or cand < best:
                     best = cand
-    if best is not None:
+    # Keep the two-word code unless reach_floor wants to climb a below-floor one
+    # (best[0] == 1 means "below floor"). min_words >= 3 leaves best None here.
+    if best is not None and not (reach_floor and best[0] == 1):
         return _checked(best[-1], sha_hex)
 
-    # Three-word: forced by min_words, or the fallback when no unique two-word
-    # code exists (~0.16% of commits).
+    # Three-word code (more bits): forced by min_words, or no unique two-word
+    # code exists, or reach_floor is climbing a sub-floor two-word code.
     y, k, w1c, w2c = sw.plan_twoword(sha_hex, words, whash)
     third = sw.plan_third(sha_hex, words, whash, y, k)
-    if third is None:
-        raise RuntimeError("no third-word match (unexpected)")
-    m, w3c = third
-    if not unique(y + k + m):
-        raise RuntimeError("three-word code still ambiguous (astronomically rare)")
-    w1, w2, w3 = sw.select_words([w1c, w2c, w3c], rank, key=shortkey)
-    return _checked(sw.format_three(w1, y, w2, k, w3, m), sha_hex)
+    if third is not None:
+        m, w3c = third
+        if unique(y + k + m):
+            w1, w2, w3 = sw.select_words([w1c, w2c, w3c], rank, key=shortkey)
+            return _checked(sw.format_three(w1, y, w2, k, w3, m), sha_hex)
+
+    # No valid three-word code. If reach_floor left a unique sub-floor two-word
+    # code in hand, keep it; otherwise there is genuinely no encoding.
+    if best is not None:
+        return _checked(best[-1], sha_hex)
+    raise RuntimeError("no unique commitword: three-word code unavailable")
 
 
 def _checked(code, sha_hex):
@@ -195,6 +210,9 @@ def main():
     ap.add_argument("--min-words", type=int, choices=(2, 3), default=2,
                     help="minimum words in the code; 3 forces a three-word code "
                          "for extra future-uniqueness headroom (default 2)")
+    ap.add_argument("--reach-floor", action="store_true",
+                    help="grow a third word when a two-word code can't clear the "
+                         "margin floor (default: floor is a soft preference)")
     args = ap.parse_args()
     try:
         full = subprocess.check_output(
@@ -209,7 +227,8 @@ def main():
     shas = repo_shas(args.repo)
     if full not in shas:
         shas.append(full)
-    print(mint(full, shas, words, rank, whash, args.growth, args.pmax, args.min_words))
+    print(mint(full, shas, words, rank, whash, args.growth, args.pmax,
+               args.min_words, args.reach_floor))
 
 
 if __name__ == "__main__":

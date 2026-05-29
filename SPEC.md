@@ -274,6 +274,12 @@ The floor is a **soft preference**, not a hard gate: a short code that is alread
 unique but sits below the floor is preferred over growing a third word merely to
 reach the floor. **Uniqueness is the only hard requirement.**
 
+The reference minter can optionally promote the floor to a gate
+(`commitmint.py --reach-floor`): when the best unique two-word code is below the
+floor, it grows a third word to climb toward it, falling back to the two-word
+code if no three-word code can be built. This is a producer-side preference and
+does not affect decoding (§5).
+
 ### 6.3 Two-word search
 
 For each feasible `y` (where some word's hash matches ≥ `y` leading bits) and
