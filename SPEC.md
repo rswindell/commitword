@@ -35,10 +35,26 @@ the **word-side hash function**. A decoder hashes the *literal words taken from
 the code* — it never consults a wordlist (see §5.1). Two implementations agree on
 decode and verify for every code if and only if they use the same hash.
 
+This is **not** the commit's own object hash. Two distinct hashes are in play:
+the *word-side* hash here (the only shared parameter), and the *commit object
+hash* git uses to identify the commit, which the scheme consumes as opaque bits
+(§4.3) and is agnostic to. They are independent: the default word-side hash is
+`sha1` only by coincidence with git's historical object hash — you may hash
+words with `sha1` against a SHA-256 repo, or vice versa.
+
 | parameter | default | role                                                  |
 |-----------|---------|-------------------------------------------------------|
 | hash      | `sha1`  | hashes each literal word in the code (§4.3)            |
 | `PROBE`   | `80`    | bits of each word-hash / of the SHA exposed to matching; must be ≥ any code's total bits |
+
+Unlike the hash, `PROBE` is **not** an interop parameter: its exact value does
+not affect how any code decodes. Since the top `n` bits of a word's hash are the
+same whether you slice 80 bits or 128 and then shift, two implementations agree
+on every code as long as both keep `PROBE ≥ total`. So `PROBE` is the maximum
+identifying bits any single code can pin — a ceiling, not a target. The default
+`80` is generous headroom (realistic codes pin ~20–40 bits) and a clean byte
+boundary (10 bytes), so slicing the leading `PROBE` bits of a digest needs no
+sub-byte handling.
 
 A bare commitword is assumed to use **sha1**. A code is **portable** to any resolver
 using the same hash, *regardless of which wordlist (if any) the producer used* —
@@ -163,6 +179,14 @@ left-aligned as an integer. Concretely: take the first `⌈n/8⌉` bytes of the
 digest, interpret big-endian, and right-shift by `(8·⌈n/8⌉ − n)` to drop the
 trailing excess bits. The SHA side is read identically: `sha_to_bits(sha, n)` =
 the first `n` bits of the commit's binary hash.
+
+The commit hash is consumed purely as opaque bits — the scheme never depends on
+which algorithm produced it. Any commit-identifier hash that supplies at least
+`PROBE` bits works (git's SHA-1 at 160 bits or SHA-256 at 256 bits, both with
+ample margin). A given code is, however, bound to the commit's *actual* hash
+value: if a repo transitions object formats (e.g. SHA-1 → SHA-256), every
+commit's identity changes and codes minted against the old identities no longer
+resolve — the same way an abbreviated SHA would not survive the transition.
 
 ### 4.4 What each word pins
 
