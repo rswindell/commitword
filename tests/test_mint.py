@@ -36,6 +36,19 @@ def test_mint_three_word_when_two_word_collides():
     assert not sw.decode_and_verify(code, other)                        # resolves only SHA
 
 
+def test_mint_min_words_forces_three():
+    # min_words=3 must emit a three-word code even when a unique two-word code
+    # exists, and it must verify, stay hex-safe, and pin strictly more bits.
+    import re
+    two = commitmint.mint(SHA, [SHA], WORDS, RANK, WHASH)
+    three = commitmint.mint(SHA, [SHA], WORDS, RANK, WHASH, min_words=3)
+    assert re.fullmatch(r"[a-z]+\d+[a-z]+", two)                 # default two-word
+    assert re.fullmatch(r"[a-z]+\d+[a-z]+\d+[a-z]+", three)      # forced three-word
+    assert sw.decode_and_verify(three, SHA)
+    assert not all(c in "0123456789abcdef" for c in three)       # hex-safe
+    assert sw.decode_to_bits(three)[0] > sw.decode_to_bits(two)[0]  # more bits
+
+
 def test_mint_output_is_hex_safe():
     code = commitmint.mint(SHA, [SHA], WORDS, RANK, WHASH)
     assert not all(c in "0123456789abcdef" for c in code)               # has a g-z letter

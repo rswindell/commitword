@@ -98,9 +98,14 @@ def choose_pair(w1pool, w2pool, rank, wordset):
     return (a, b, allit, dbl)
 
 
-def mint(sha_hex, shas, words, rank, whash, growth=16.0, pmax=0.1):
+def mint(sha_hex, shas, words, rank, whash, growth=16.0, pmax=0.1, min_words=2):
     """Shortest unique-in-`shas` code for `sha_hex` that clears the growth-margin
-    floor. `shas` must include `sha_hex`."""
+    floor. `shas` must include `sha_hex`.
+
+    `min_words=3` forces a (maximum-bit) three-word code even when a unique
+    two-word code exists, for extra future-collision headroom. The default 2
+    uses two words when possible and grows a third only when no unique two-word
+    code exists."""
     floor = max(margin_floor(len(shas), growth, pmax), sw.Y_MIN + sw.K_MIN)
     target = sw.sha_to_bits(sha_hex, sw.PROBE)
     ml0 = {w: sw.match_len_at(whash[w], target, 0) for w in words}
@@ -126,36 +131,39 @@ def mint(sha_hex, shas, words, rank, whash, growth=16.0, pmax=0.1):
     # preferring those that clear the margin floor. The floor is a *soft*
     # preference, not a hard gate: a short unique sub-floor code beats growing a
     # third word just to reach the floor. Uniqueness is the only hard rule.
+    # Skipped entirely when min_words forces a three-word code.
     best = None              # (floor?, len(code), allit?, dbl-plural?, -total, ranks, code)
-    for y in range(sw.Y_MIN, min(ybest, Y_SEARCH_MAX) + 1):
-        w1pool = [w for w in words if ml0[w] >= y]
-        if not w1pool:
-            continue
-        mly = {w: min(sw.match_len_at(whash[w], target, y), sw.K_MAX) for w in words}
-        for k in range(sw.K_MIN, sw.K_MAX + 1):
-            total = y + k
-            if not unique(total):
+    if min_words <= 2:
+        for y in range(sw.Y_MIN, min(ybest, Y_SEARCH_MAX) + 1):
+            w1pool = [w for w in words if ml0[w] >= y]
+            if not w1pool:
                 continue
-            w2pool = [w for w in words if mly[w] >= k]
-            if not w2pool:
-                continue
-            pair = choose_pair(w1pool, w2pool, rank, wordset)
-            if pair is None:
-                continue
-            w1, w2, allit, dbl = pair
-            code = sw.format_two(w1, y, w2, k)
-            # prefer: clears floor, then shorter, then alliterates, then not
-            # double-plural (both aesthetics free -- ranked below length), then
-            # MORE bits (free margin), then commoner words, then lexicographic
-            cand = (0 if total >= floor else 1, len(code),
-                    0 if allit else 1, 0 if not dbl else 1,
-                    -total, rank[w1] + rank[w2], code)
-            if best is None or cand < best:
-                best = cand
+            mly = {w: min(sw.match_len_at(whash[w], target, y), sw.K_MAX) for w in words}
+            for k in range(sw.K_MIN, sw.K_MAX + 1):
+                total = y + k
+                if not unique(total):
+                    continue
+                w2pool = [w for w in words if mly[w] >= k]
+                if not w2pool:
+                    continue
+                pair = choose_pair(w1pool, w2pool, rank, wordset)
+                if pair is None:
+                    continue
+                w1, w2, allit, dbl = pair
+                code = sw.format_two(w1, y, w2, k)
+                # prefer: clears floor, then shorter, then alliterates, then not
+                # double-plural (both aesthetics free -- ranked below length), then
+                # MORE bits (free margin), then commoner words, then lexicographic
+                cand = (0 if total >= floor else 1, len(code),
+                        0 if allit else 1, 0 if not dbl else 1,
+                        -total, rank[w1] + rank[w2], code)
+                if best is None or cand < best:
+                    best = cand
     if best is not None:
         return _checked(best[-1], sha_hex)
 
-    # Three-word tail: no unique two-word code exists at all (~0.16%).
+    # Three-word: forced by min_words, or the fallback when no unique two-word
+    # code exists (~0.16% of commits).
     y, k, w1c, w2c = sw.plan_twoword(sha_hex, words, whash)
     third = sw.plan_third(sha_hex, words, whash, y, k)
     if third is None:
@@ -184,6 +192,9 @@ def main():
                     help="repo-growth factor for the margin floor (default 16)")
     ap.add_argument("--pmax", type=float, default=0.1,
                     help="max future-collision probability for the floor (default 0.1)")
+    ap.add_argument("--min-words", type=int, choices=(2, 3), default=2,
+                    help="minimum words in the code; 3 forces a three-word code "
+                         "for extra future-uniqueness headroom (default 2)")
     args = ap.parse_args()
     try:
         full = subprocess.check_output(
@@ -198,7 +209,7 @@ def main():
     shas = repo_shas(args.repo)
     if full not in shas:
         shas.append(full)
-    print(mint(full, shas, words, rank, whash, args.growth, args.pmax))
+    print(mint(full, shas, words, rank, whash, args.growth, args.pmax, args.min_words))
 
 
 if __name__ == "__main__":

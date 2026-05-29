@@ -296,6 +296,11 @@ If **no** unique two-word code exists (~0.16% of commits in a large repo), appen
 a third word pinning the next `m` bits (`m` chosen as the best available match,
 ≥ `M_MIN`) and emit the verified three-word code.
 
+The reference minter also takes this branch unconditionally when asked for a
+three-word code (`commitmint.py --min-words 3`), trading the extra word for more
+identifying bits of future-collision headroom. This is a producer-side option
+only; it does not affect decoding (§5).
+
 ### 6.5 Self-verification
 
 The minter MUST confirm its own output decodes and verifies against the source

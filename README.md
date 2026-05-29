@@ -64,6 +64,8 @@ Python 3, standard library only. No install step.
 # e.g.
 ./commitmint.py HEAD --repo .
 ./commitmint.py v3.21 --repo ~/repo
+# force a three-word code for extra future-uniqueness headroom
+./commitmint.py HEAD --repo . --min-words 3
 ```
 
 **Resolve** a code back to its commit(s):
