@@ -38,6 +38,15 @@ def test_decode_rejects_garbage():
     assert sw.decode_and_verify("xxx", SHA) is False
 
 
+def test_decode_rejects_out_of_range_numbers():
+    # The grammar's \d+ is unbounded, but a real code never pins more than PROBE
+    # bits (SPEC §2.1). An over-wide number must return None, not raise on the
+    # negative shift in _top -- commitfind feeds untrusted CLI input here.
+    for code in ("word999word", "alpha9999999beta", "one5gamma9999999delta"):
+        assert sw.decode_to_bits(code) is None
+        assert sw.decode_and_verify(code, SHA) is False
+
+
 def test_decode_rejects_all_hex_lookalike():
     # An all-[0-9a-f] string is a raw SHA prefix, not a word code -- even when it
     # matches the word/N/word shape. dead12beef = dead/12/beef but is valid hex.

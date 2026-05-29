@@ -225,6 +225,8 @@ def decode_to_bits(encoded):
         y, k = unpack1(int(n1))
         m = unpack2(int(n2))
         total = y + k + m
+        if total > PROBE:        # a valid code never pins more than PROBE bits (§2.1)
+            return None
         expected = ((_top(hash_bits(w1, PROBE), y) << (k + m))
                     | (_top(hash_bits(w2, PROBE), k) << m)
                     | _top(hash_bits(w3, PROBE), m))
@@ -234,6 +236,8 @@ def decode_to_bits(encoded):
         w1, n1, w2 = m2.groups()
         y, k = unpack1(int(n1))
         total = y + k
+        if total > PROBE:        # a valid code never pins more than PROBE bits (§2.1)
+            return None
         expected = (_top(hash_bits(w1, PROBE), y) << k) | _top(hash_bits(w2, PROBE), k)
         return (total, expected)
     return None
