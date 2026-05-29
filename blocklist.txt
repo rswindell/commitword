@@ -1,0 +1,107 @@
+# Words excluded from curated.txt so minted commitword codes read neutral/pleasant.
+# Whole-word, case-insensitive, exact match. Lines starting with # are ignored.
+# Edit freely and re-run curate.py to regenerate curated.txt.
+
+# --- sexual / NSFW / identity ---
+booty
+breast
+erotica
+fetish
+gays
+lesbian
+lesbians
+naked
+naughty
+sexual
+sexuality
+sexually
+sperm
+virgin
+
+# --- violence / weapons / death ---
+abuse
+assault
+attack
+attacked
+attacks
+bomb
+brutal
+dead
+deadly
+death
+deaths
+devil
+died
+dying
+evil
+explosion
+funeral
+guns
+hate
+kill
+killed
+killer
+killing
+kills
+knife
+murder
+poison
+shoot
+shooting
+terror
+terrorism
+terrorist
+terrorists
+torture
+victim
+victims
+violence
+violent
+wars
+weapon
+weapons
+
+# --- drugs / vice ---
+addiction
+alcohol
+casino
+casinos
+cigarette
+cigarettes
+drug
+drugs
+drunk
+gambling
+marijuana
+smoking
+tobacco
+
+# --- crime ---
+corruption
+crime
+crimes
+criminal
+fraud
+jail
+prison
+prisoner
+prisoners
+steal
+stolen
+theft
+
+# --- disease ---
+disease
+diseases
+infected
+infection
+infections
+infectious
+sick
+tumor
+
+# --- distressing / other ---
+abortion
+slave
+stupid
+suicide
