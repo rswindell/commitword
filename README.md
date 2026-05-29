@@ -91,6 +91,11 @@ repo-uniqueness):
 
 ## How a commitword reads
 
+At heart a commitword is just an **abbreviated-SHA prefix rendered as words**.
+Decoding recovers the SHA's leading bits directly, with no repo; the repo search
+only maps that prefix to the one full SHA that carries it — the same job
+`git show d2a6dcb` does for a hex prefix.
+
 Take `inner19sage`:
 
 | piece    | role                                                            |
@@ -180,6 +185,45 @@ commitword optimizes for different things:
 
 In short: shawords is a lossy, fixed-length hash→phrase mnemonic; commitword is
 a shorter, repo-verified identifier you can resolve back to exactly one commit.
+
+## Where commitword sits among the alternatives
+
+Rendering an identifier as something a human can say is an old idea, and
+commitword is one point in a well-populated space:
+
+- **Abbreviated SHAs** (`d2a6dcb`) — git-native and resolvable everywhere, but
+  still hex: not sayable, memorable, or dictatable.
+- **Positional word lists** — bip39, Diceware, S/KEY (RFC 1751), the PGP word
+  list, "friendly name" generators like Docker's `nostalgic_einstein`. Each word
+  *is* an index into a fixed list, so they are dense (a full `log2(list)` bits
+  per word) and need no inline number or fallback word — but a resolver **must
+  ship the exact wordlist** to turn words back into bits.
+- **Algorithmic syllables** — proquints (`lusab-babad`) encode bits as
+  pronounceable consonant–vowel patterns: no wordlist, fixed length, but
+  pronounceable *nonsense* rather than real words, so less memorable.
+
+|                            | abbrev. SHA | positional (bip39 …) | proquints | commitword |
+|----------------------------|:-----------:|:--------------------:|:---------:|:----------:|
+| real, memorable words      | no          | yes                  | no        | **yes**    |
+| resolve without a wordlist | n/a (hex)   | **no**               | yes       | **yes**    |
+| deterministic length       | grows       | yes                  | yes       | no         |
+| carries an inline number   | no          | no                   | no        | yes        |
+
+commitword deliberately occupies the one cell none of the others reach: **real,
+memorable words *and* wordlist-free resolution.** That combination forces the
+mechanism. With real words, the only wordlist-independent map from a word to bits
+is a *hash* — a positional `word → index` lookup *is* a wordlist — so commitword
+matches words whose hash pins the SHA's bits instead of indexing them, and a
+resolver needs only the hash (`sha1`), never the ~6,000-word list.
+
+The price is paid in the format. Because a hash matches *however many* bits it
+happens to (not a controlled amount), the code must record how many bits each
+word pins — that is the inline number — and each word pins only ≈ `log2(list)` ≈
+12–13 bits, so a rare commit needs a third word. A positional encoding avoids
+both (no number, `inner.sage`, never a third word) at the cost of shipping the
+list. If you prefer that trade, a positional scheme fits better; commitword bets
+that wordlist-free resolution — recompute any code with nothing but git and a
+stock hash — is worth a spoken number.
 
 ## Documentation
 

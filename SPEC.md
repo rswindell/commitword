@@ -24,6 +24,14 @@ Two forms exist:
 The words pin successive slices of the commit's top bits; the numbers encode the
 slice widths and double as separators.
 
+Equivalently, a commitword is an **abbreviated-SHA prefix expressed as words**:
+decoding (§5) recovers the SHA's leading `total` bits with no repository, just as
+an abbreviated hex SHA is a prefix git resolves against its object index. The
+distinguishing choice is that a word maps to bits through a *hash* rather than a
+positional wordlist lookup, so resolution needs the hash but never a wordlist
+(§2). The reference rationale and the alternatives this trades against are
+described in the README.
+
 ---
 
 ## 2. Parameters and portability (normative)
