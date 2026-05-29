@@ -309,6 +309,14 @@ Outside the repository it was minted against, a code is only *probabilistically*
 unique: it pins `total` bits, so two unrelated commits collide with probability
 ≈ `2^-total`. Uniqueness is a property of the mint-time repo, not a global one.
 
+That `2^-total` figure is the *accidental* rate. A commitword is **not**
+collision-resistant against an adversary: deliberately constructing a commit
+whose top `total` bits match a given code costs only ≈ `2^total` hash trials
+(seconds for a two-word code, and far cheaper than a full hash collision even
+for three words). A commitword is therefore a convenience identifier, not a
+security primitive — use a full SHA or a signed object where authenticity
+matters.
+
 ---
 
 ## 8. Worked examples
