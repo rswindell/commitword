@@ -68,6 +68,8 @@ Python 3, standard library only. No install step.
 ./commitmint.py HEAD --repo . --min-words 3
 # or grow a third word only when two words can't clear the margin floor
 ./commitmint.py HEAD --repo . --reach-floor
+# decorate the output with readability separators (-, _, or .): what-9-plug
+./commitmint.py HEAD --repo . --sep -
 ```
 
 **Resolve** a code back to its commit(s):
@@ -75,6 +77,8 @@ Python 3, standard library only. No install step.
 ```sh
 ./commitfind.py inner19sage --repo ~/repo
 # searches all refs by default; --head-only restricts to HEAD's history
+# optional -, _, or . separators are ignored -- inner-19-sage resolves the same
+./commitfind.py inner-19-sage --repo ~/repo
 ```
 
 Resolving a short handle to a unique commit is not new — git already does it
@@ -124,6 +128,9 @@ third word, e.g. `threats49thirty4carbon`.
 - **Self-verifying** — a code carries the bits it claims; given a candidate SHA
   you can confirm the match offline, no repo needed.
 - **Case-insensitive** — `Inner19Sage` == `inner19sage`.
+- **Separator-tolerant** — optional `-`, `_`, or `.` at word/number boundaries are
+  ignored: `inner-19-sage` == `inner.19.sage` == `inner19sage`. Display only; the
+  canonical (minted) form carries none. Mint a decorated form with `--sep`.
 - **Hash-bound** — resolving a code depends only on the *hash* (default sha1); a
   resolver hashes the literal words and needs **no wordlist**. The wordlist only
   affects which codes the *minter* picks. So `COMMITWORD_LIST` doesn't affect
