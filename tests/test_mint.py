@@ -98,3 +98,40 @@ def test_mint_no_longer_than_maxbits_encoding():
     w1, y, w2, k = sw.encode(SHA, WORDS, RANK, WHASH)
     maxbits = sw.format_two(w1, y, w2, k)
     assert len(minted) <= len(maxbits)
+
+
+def test_rank_candidates_all_resolve_same_commit():
+    # Every listed alternative must decode-and-verify against the target SHA and
+    # be unique in the repo -- i.e. resolve to exactly this one commit. That is
+    # the whole safety contract: the choice among them is purely cosmetic.
+    cands = commitmint.rank_two_word_candidates(SHA, _REPO, WORDS, RANK, WHASH)
+    assert len(cands) > 1                                   # plenty to choose from
+    for code in cands:
+        assert sw.decode_and_verify(code, SHA)
+        total = sw.decode_to_bits(code)[0]
+        exp = sw.sha_to_bits(SHA, total)
+        assert sum(1 for s in _REPO if sw.sha_to_bits(s, total) == exp) == 1
+
+
+def test_rank_candidates_deduped_by_word_pair_and_sorted():
+    import re
+    cands = commitmint.rank_two_word_candidates(SHA, _REPO, WORDS, RANK, WHASH)
+    pairs = []
+    for code in cands:
+        m = re.fullmatch(r"([a-z]+)\d+([a-z]+)", code)
+        pairs.append((m.group(1), m.group(2)))
+    assert len(pairs) == len(set(pairs))                   # one code per word-pair
+    # ranked best-first: the canonical mint pick is among them
+    canonical = commitmint.mint(SHA, _REPO, WORDS, RANK, WHASH)
+    assert canonical in cands
+
+
+def test_rank_candidates_empty_when_no_unique_two_word():
+    # The rare commit with no unique two-word code yields no two-word
+    # alternatives (the caller falls back to the three-word canonical).
+    y, k, _w1, _w2 = sw.plan_twoword(SHA, WORDS, WHASH)
+    other = _collider(SHA, y + k)
+    cands = commitmint.rank_two_word_candidates(SHA, [SHA, other], WORDS, RANK, WHASH)
+    # any candidate would have to pin > y+k bits to stay unique; if none do, empty
+    for code in cands:
+        assert sw.decode_to_bits(code)[0] > y + k

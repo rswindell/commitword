@@ -352,7 +352,17 @@ The minter MUST confirm its own output decodes and verifies against the source
 SHA (§5) before returning it. This also enforces the hex-safety invariant, since
 an all-hex code would fail to decode.
 
----
+### 6.6 Alternatives (informative)
+
+The ranking in §6.3 selects *one* code, but a commit typically admits **many**
+unique codes — different `(y, k)` slots and different words whose hashes pin the
+required bits. Every such code decodes, verifies, and resolves to the *same
+single commit*; the choice among them is purely cosmetic. A producer MAY
+therefore surface the runners-up (`commitmint.py --list` to enumerate them with
+indices, `--choose N` to emit one) so a human or agent can pick a less awkward
+word pair. This is a producer-side convenience and does not affect the wire
+format or decoding (§5): any code it emits is conformant by the same rules as
+the default pick.
 
 ## 7. Resolution and uniqueness (informative)
 

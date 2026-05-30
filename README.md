@@ -70,7 +70,41 @@ Python 3, standard library only. No install step.
 ./commitmint.py HEAD --repo . --reach-floor
 # decorate the output with readability separators (-, _, or .): what-9-plug
 ./commitmint.py HEAD --repo . --sep -
+# don't like the default word pair? list alternatives and pick the least awkward
+./commitmint.py HEAD --repo . --list        # indexed, ranked candidates
+./commitmint.py HEAD --repo . --choose 3    # emit the candidate at index 3
+./commitmint.py HEAD --repo . -i            # pick interactively (arrow keys + Enter)
 ```
+
+A commit usually has *many* valid commitwords — the minter just picks the
+tidiest by default. They all resolve to the **same single commit**, so `--list`
+shows the ranked alternatives and `--choose N` emits the one you want, letting a
+human or an LLM swap in a less awkward word pair with no effect on resolution.
+The list is ranked best-first (**index 0 is the default pick**), and each row
+shows its **bit strength** — the one axis that
+actually differs (more bits = more future-collision headroom):
+
+```
+$ ./commitmint.py HEAD --repo ~/repo --list 5
+# ranked best-first (index 0 = default pick); margin floor 23 bits …  ← on stderr
+0  mothers19forces      23 bits
+1  mothers19intention   23 bits
+2  mothers19structures  23 bits
+3  your1pays            21 bits
+4  hacker1pays          21 bits
+
+$ ./commitmint.py HEAD --repo ~/repo --choose 3      # emit just that one
+your1pays
+```
+
+Or skip the index step entirely with `-i`, an interactive arrow-key picker
+(↑/↓ to move, Enter to select, `q` to cancel) that draws its menu on the
+terminal and prints just the chosen code to stdout — so `code=$(./commitmint.py
+HEAD --repo . -i)` still captures only the code.
+
+`--choose` prints the bare code (scriptable); the ordering/floor note goes to
+stderr; and `--sep` decorates every line (`--list --sep -` →
+`mothers-19-forces …`).
 
 **Resolve** a code back to its commit(s):
 
