@@ -11,7 +11,8 @@ evolve without breaking decoders.
 ## 1. Overview
 
 A **commitword** is a short, case-insensitive, all-lowercase string such as
-`inner19sage` that pins the leading bits of a git commit SHA using words drawn
+`inner19sage` (optionally written with ignorable separators for readability,
+§3.4) that pins the leading bits of a git commit SHA using words drawn
 from an ordered wordlist. It is **lossy** (it does not encode a full SHA) but
 **self-verifying** (given a candidate SHA, an implementation can confirm whether
 the code matches it, with no repository access).
@@ -165,6 +166,13 @@ transported separator-free and lowercased; a producer MUST NOT emit separators i
 canonical output. A producer MAY render a decorated form purely for display (the
 reference minter does so on request, `commitmint.py --sep`), but the decorated
 form is not the value and two codes are equal iff their canonical forms match.
+
+**Compatibility.** This rule changes only how a decoder reads *input*; it does
+not change the wire format, and the format version stays **1**. Every minted code
+is canonical (separator-free), so a decoder predating this section still resolves
+every minted code — separators appear only in hand-decorated input. An
+implementation that omits §3.4 therefore interoperates on all real codes; it
+merely rejects decorated forms a human typed.
 
 ---
 
@@ -394,6 +402,15 @@ matters.
 
 `dead12beef` is all `[0-9a-f]`, so it is **not** a commitword; a decoder returns
 "not a commitword" and the caller treats it as a raw SHA prefix.
+
+### 8.4 Separators
+
+`inner-19-sage`, `inner_19_sage`, and `inner.19.sage` strip and parse to the same
+tokens as §8.1 (`w1 = inner`, `N1 = 19`, `w2 = sage`) and decode to the identical
+`(total = 23, expected = 6902638)`. By contrast `-inner19sage`, `inner19sage-`,
+`wh-at9plug`, and `dead-12-beef` are **not** commitwords — a separator that is
+leading, trailing, or intra-token, or a string that is all-hex once stripped
+(§3.4).
 
 ---
 
