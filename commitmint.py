@@ -354,9 +354,11 @@ def main():
     ap.add_argument("--reach-floor", action="store_true",
                     help="grow a third word when a two-word code can't clear the "
                          "margin floor (default: floor is a soft preference)")
-    ap.add_argument("--sep", choices=("-", "_", "."), default=None,
+    ap.add_argument("--sep", nargs="?", const="-", choices=("-", "_", "."),
+                    default=None,
                     help="insert this separator at word/number boundaries for "
-                         "readability, e.g. what-9-plug (default: none/canonical)")
+                         "readability, e.g. what-9-plug; bare --sep means '-' "
+                         "(default: none/canonical)")
     ap.add_argument("--list", nargs="?", type=int, const=20, default=None,
                     metavar="N",
                     help="instead of one code, list up to N (default 20) ranked "

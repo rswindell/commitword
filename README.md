@@ -3,13 +3,15 @@
 Render a git commit as a memorable word code instead of a hex blob.
 
 ```
-inner19sage      →  resolves to exactly one commit (d2a6dcb271…)
-magic28moved     →  another commit (b40af06177…)
-threats49silver4carbon  →  a three-word code (rare; for the few that need it)
+inner-19-sage    →  resolves to exactly one commit (d2a6dcb271…)
+magic-28-moved   →  another commit (b40af06177…)
+threats-49-silver-4-carbon  →  a three-word code (rare; for the few that need it)
 ```
 
-A *commitword* is an all-lowercase code like `inner19sage`: two (or, rarely, three)
-words joined by a number. It is **memorable**, **case-insensitive**,
+A *commitword* is an all-lowercase code like `inner-19-sage`: two (or, rarely,
+three) words joined by a number. The dashes are optional readability — the
+canonical minted form is `inner19sage`, and `-`, `_`, or `.` at the boundaries
+all resolve identically. It is **memorable**, **case-insensitive**,
 **self-verifying**, and — minted against a repo — **guaranteed to resolve to
 exactly one commit** there as of mint time (the same kind of guarantee an
 abbreviated SHA carries; see [Guarantees and caveats](#guarantees-and-caveats)).
@@ -38,7 +40,7 @@ it leaves the other problem untouched — hex doesn't survive a voice call, a
 glance between two screens, or a retype without a slip. A shorter blob is still
 a blob.
 
-A commitword fixes that. `inner19sage` you can say out loud, read off a slide, or
+A commitword fixes that. `inner-19-sage` you can say out loud, read off a slide, or
 type into anything without squinting — then resolve back to the exact commit with
 `commitfind`. The encoder has the repo in hand at mint time, so it picks the
 *shortest* code that's still unique among the repo's commits at mint time, and
@@ -70,8 +72,8 @@ current directory.
 ./commitmint.py HEAD -C . --min-words 3
 # or grow a third word only when two words can't clear the margin floor
 ./commitmint.py HEAD -C . --reach-floor
-# decorate the output with readability separators (-, _, or .): what-9-plug
-./commitmint.py HEAD -C . --sep -
+# decorate the output with a readability separator (bare --sep = '-'): what-9-plug
+./commitmint.py HEAD -C . --sep             # or --sep _  /  --sep .
 # don't like the default word pair? list alternatives and pick the least awkward
 ./commitmint.py HEAD -C . --list        # indexed, ranked candidates
 ./commitmint.py HEAD -C . --choose 3    # emit the candidate at index 3
@@ -105,7 +107,7 @@ terminal and prints just the chosen code to stdout — so `code=$(./commitmint.p
 HEAD -C . -i)` still captures only the code.
 
 `--choose` prints the bare code (scriptable); the ordering/floor note goes to
-stderr; and `--sep` decorates every line (`--list --sep -` →
+stderr; and `--sep` decorates every line (`--list --sep` →
 `mothers-19-forces …`).
 
 **Resolve** a code back to its commit(s):
@@ -164,7 +166,7 @@ pins 12 bits and word 2 pins 11 bits, for 23 identifying bits total — enough t
 single out one commit in a ~50k-commit repo with comfortable growth headroom.
 
 A few commits (~0.16% in a large repo) have no unique two-word code; those get a
-third word, e.g. `threats49silver4carbon`.
+third word, e.g. `threats-49-silver-4-carbon`.
 
 ## Guarantees and caveats
 
