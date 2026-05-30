@@ -14,7 +14,7 @@ def test_pack2_bijection():
 
 
 def test_pack1_known_values():
-    # threats49thirty: N1=49 -> y=15, k=14
+    # threats49silver: N1=49 -> y=15, k=14
     assert sw.unpack1(49) == (15, 14)
     assert sw.pack1(10, 10) == 0
 

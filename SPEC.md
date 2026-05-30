@@ -94,11 +94,11 @@ a text file, one candidate per line. Each line is trimmed and lowercased, then
 
 The surviving words, **in file order**, form the wordlist. Word *rank* is the
 0-based index in this order (lower = earlier in the file). The reference
-`curated.txt` yields **6,368** words; to reproduce the reference minter's choices
+`curated.txt` yields **6,350** words; to reproduce the reference minter's choices
 exactly, use the same file, identifiable by its SHA-256:
 
 ```
-a61323513252e5fc2de0ac71f87633bd09a6bca0494569379337ee1c652ed068
+d68b9a8301a0b34c5c4e7bac8c63c7078f55b93536fda17f37b2d47a2feb8dab
 ```
 
 ---
@@ -389,14 +389,14 @@ matters.
   `d2a6dcb27169796c…` does (its top 12 bits are also `3370`), so the code
   verifies.
 
-### 8.2 `threats49thirty4carbon` (three-word)
+### 8.2 `threats49silver4carbon` (three-word)
 
-- Parse: `w1 = threats`, `N1 = 49`, `w2 = thirty`, `N2 = 4`, `w3 = carbon`.
+- Parse: `w1 = threats`, `N1 = 49`, `w2 = silver`, `N2 = 4`, `w3 = carbon`.
 - Unpack: `y = 49//9 + 10 = 15`, `k = 49%9 + 10 = 14`, `m = 4 + 8 = 12`,
   `total = 41`.
-- `expected = (top(sha1(threats),15) << 26) | (top(sha1(thirty),14) << 12)
-  | top(sha1(carbon),12) = 1955335576866`.
-- A commit matches iff its top 41 bits equal `1955335576866`.
+- `expected = (top(sha1(threats),15) << 26) | (top(sha1(silver),14) << 12)
+  | top(sha1(carbon),12) = 1955348913442`.
+- A commit matches iff its top 41 bits equal `1955348913442`.
 
 ### 8.3 Hex-safety
 

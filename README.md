@@ -5,7 +5,7 @@ Render a git commit as a memorable word code instead of a hex blob.
 ```
 inner19sage      →  resolves to exactly one commit (d2a6dcb271…)
 magic28moved     →  another commit (b40af06177…)
-threats49thirty4carbon  →  a three-word code (rare; for the few that need it)
+threats49silver4carbon  →  a three-word code (rare; for the few that need it)
 ```
 
 A *commitword* is an all-lowercase code like `inner19sage`: two (or, rarely, three)
@@ -118,7 +118,7 @@ pins 12 bits and word 2 pins 11 bits, for 23 identifying bits total — enough t
 single out one commit in a ~50k-commit repo with comfortable growth headroom.
 
 A few commits (~0.16% in a large repo) have no unique two-word code; those get a
-third word, e.g. `threats49thirty4carbon`.
+third word, e.g. `threats49silver4carbon`.
 
 ## Guarantees and caveats
 
@@ -171,7 +171,7 @@ portability: codes minted under a non-default hash resolve only under that hash.
 - `commitword.py` — the encode/decode/verify library + a standalone CLI.
 - `commitmint.py` — repo-aware minter (the main entry point).
 - `commitfind.py` — reverse lookup (code → commit).
-- `curated.txt` — the 6,368-word canonical wordlist.
+- `curated.txt` — the 6,350-word canonical wordlist.
 - `curate.py` / `blocklist.txt` — regenerate `curated.txt` (curation + exclusions).
 
 ## Prior art

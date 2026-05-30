@@ -1,4 +1,6 @@
-# Words excluded from curated.txt so minted commitword codes read neutral/pleasant.
+# Words excluded from curated.txt so minted commitword codes read neutral/pleasant
+# -- and so number words don't muddle a code when spoken (it already carries a
+# number, e.g. "...49 thirty 4..." reads as one run of digits).
 # Whole-word, case-insensitive, exact match. Lines starting with # are ignored.
 # Edit freely and re-run curate.py to regenerate curated.txt.
 
@@ -105,3 +107,41 @@ abortion
 slave
 stupid
 suicide
+
+# --- number words (spoken, they blur into the code's own number) ---
+# Cardinals and magnitudes only; ordinals/quantity words (first, second, third,
+# double, half, dozen, ...) are kept -- their everyday meaning dominates, and
+# they don't blur into a run of spoken digits.
+zero
+one
+two
+three
+four
+five
+six
+seven
+eight
+nine
+ten
+eleven
+twelve
+thirteen
+fourteen
+fifteen
+sixteen
+seventeen
+eighteen
+nineteen
+twenty
+thirty
+forty
+fifty
+sixty
+seventy
+eighty
+ninety
+hundred
+thousand
+million
+billion
+trillion

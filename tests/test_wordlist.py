@@ -26,3 +26,13 @@ def test_a_few_known_words_are_blocked():
     words = set(sw.load_words())
     for w in ("lesbians", "naked", "kill", "murder", "slave", "drug"):
         assert w not in words
+
+
+def test_number_words_excluded_but_quantity_words_kept():
+    # Cardinals/magnitudes blur into a spoken code's own number, so they're out;
+    # ordinals and quantity words (which read non-numerically) stay.
+    words = set(sw.load_words())
+    for w in ("zero", "three", "seven", "twelve", "thirty", "hundred", "thousand"):
+        assert w not in words, f"number word leaked into curated.txt: {w}"
+    for w in ("first", "second", "third", "double", "half", "dozen"):
+        assert w in words, f"quantity word wrongly excluded: {w}"
