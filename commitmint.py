@@ -213,6 +213,9 @@ def main():
     ap.add_argument("--reach-floor", action="store_true",
                     help="grow a third word when a two-word code can't clear the "
                          "margin floor (default: floor is a soft preference)")
+    ap.add_argument("--sep", choices=("-", "_", "."), default=None,
+                    help="insert this separator at word/number boundaries for "
+                         "readability, e.g. what-9-plug (default: none/canonical)")
     args = ap.parse_args()
     try:
         full = subprocess.check_output(
@@ -227,8 +230,9 @@ def main():
     shas = repo_shas(args.repo)
     if full not in shas:
         shas.append(full)
-    print(mint(full, shas, words, rank, whash, args.growth, args.pmax,
-               args.min_words, args.reach_floor))
+    code = mint(full, shas, words, rank, whash, args.growth, args.pmax,
+                args.min_words, args.reach_floor)
+    print(sw.separate(code, args.sep) if args.sep else code)
 
 
 if __name__ == "__main__":

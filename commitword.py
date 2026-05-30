@@ -205,8 +205,25 @@ def format_three(w1, y, w2, k, w3, m):
     return f"{w1}{pack1(y, k)}{w2}{pack2(m)}{w3}"
 
 
-_RE_TWO = re.compile(r"^([a-z]+)(\d+)([a-z]+)$")
-_RE_THREE = re.compile(r"^([a-z]+)(\d+)([a-z]+)(\d+)([a-z]+)$")
+def separate(code, sep):
+    """Insert `sep` at each word/number boundary of a canonical code, for
+    readable display ("what9plug" -> "what-9-plug"). Decoders ignore separators
+    (see decode_to_bits, SPEC §3.4), so the decorated form resolves identically.
+    `sep` should be an accepted separator character (one of `_SEP`)."""
+    return re.sub(r"(?<=[a-z])(?=[0-9])|(?<=[0-9])(?=[a-z])", sep, code)
+
+
+# Optional, ignored separators a human may insert at word/number boundaries for
+# readability ("what-9-plug" == "what9plug"). They are stripped for the
+# hex-safety test and excluded from the parsed tokens; the canonical (minted)
+# form has none. The anchored grammars accept only a single boundary separator
+# -- leading, trailing, doubled, and intra-token separators do not match, so the
+# input is "not a commitword" (SPEC §3.4).
+_SEP = "-_."
+_STRIP_SEP = str.maketrans("", "", _SEP)
+
+_RE_TWO = re.compile(r"^([a-z]+)[-_.]?(\d+)[-_.]?([a-z]+)$")
+_RE_THREE = re.compile(r"^([a-z]+)[-_.]?(\d+)[-_.]?([a-z]+)[-_.]?(\d+)[-_.]?([a-z]+)$")
 
 
 def _top(h, n):
@@ -215,13 +232,15 @@ def _top(h, n):
 
 def decode_to_bits(encoded):
     """Parse a code -> (total_bits, expected_prefix_int), or None if malformed.
-    Case-insensitive; input is lowercased before parsing."""
+    Case-insensitive; optional '-'/'_' separators at word/number boundaries are
+    ignored (SPEC §3.4). Input is lowercased before parsing."""
     s = encoded.strip().lower()
-    # A genuine commitword always carries a g-z letter (encoder guarantee, §3.4).
-    # An all-[0-9a-f] string (e.g. "dead12beef") is a raw SHA prefix, not our
-    # code -- reject it so the caller can treat it as a SHA instead of mis-
-    # parsing it as word/N/word.
-    if not s or all(c in "0123456789abcdef" for c in s):
+    bare = s.translate(_STRIP_SEP)
+    # A genuine commitword always carries a g-z letter (encoder guarantee, §3.3).
+    # An all-[0-9a-f] string (e.g. "dead12beef", or "dead-12-beef" once its
+    # separators are stripped) is a raw SHA prefix, not our code -- reject it so
+    # the caller can treat it as a SHA instead of mis-parsing it as word/N/word.
+    if not bare or all(c in "0123456789abcdef" for c in bare):
         return None
     m3 = _RE_THREE.match(s)
     if m3:

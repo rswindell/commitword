@@ -118,7 +118,9 @@ As anchored regular expressions:
 - two-word: `^[a-z]+\d+[a-z]+$`
 - three-word: `^[a-z]+\d+[a-z]+\d+[a-z]+$`
 
-Numbers carry no padding and serve as the delimiters between words.
+Numbers carry no padding and serve as the delimiters between words. The forms
+above are the **canonical** shape; a decoder also accepts optional readability
+separators at word/number boundaries (§3.4).
 
 ### 3.2 Case
 
@@ -135,6 +137,34 @@ A decoder MUST reject an input whose characters are all in `[0-9a-f]` (return
 "not a commitword") so that, e.g., `dead12beef` is treated as a hex SHA prefix and
 never mis-parsed as word/number/word. Producers MUST guarantee this invariant
 (the reference minter ensures at least one chosen word is non-hex-like).
+
+### 3.4 Separators (optional, ignored)
+
+For readability a code MAY carry a single optional separator — one of `-`, `_`,
+or `.` — at each boundary between a word and an adjacent number. `what-9-plug`,
+`what.9.plug`, `what-9plug`, and `what9plug` are the same code.
+
+Separators are cosmetic input, like letter case (§3.2) — not part of the value.
+A decoder MUST:
+
+- **strip** separators before the §3.3 hex-safety test, so that an otherwise
+  all-hex string is still rejected (`dead-12-beef` → `dead12beef` → not a
+  commitword), and
+- accept a separator **only** at a word/number boundary. A separator that is
+  leading, trailing, repeated, or inside a word or number makes the input **not**
+  a commitword: `-what9plug`, `what9plug-`, `wh-at9plug`, and `what--9plug` are
+  all invalid.
+
+Anchored, the accepted forms are:
+
+- two-word: `^[a-z]+[-_.]?\d+[-_.]?[a-z]+$`
+- three-word: `^[a-z]+[-_.]?\d+[-_.]?[a-z]+[-_.]?\d+[-_.]?[a-z]+$`
+
+The **canonical** form carries no separators. Codes are stored, compared, and
+transported separator-free and lowercased; a producer MUST NOT emit separators in
+canonical output. A producer MAY render a decorated form purely for display (the
+reference minter does so on request, `commitmint.py --sep`), but the decorated
+form is not the value and two codes are equal iff their canonical forms match.
 
 ---
 
@@ -213,10 +243,11 @@ The code therefore pins a contiguous prefix of `total` bits of the SHA, where
 
 ### 5.1 Decode to bits
 
-Given a code, after lowercasing and the §3.3 hex-safety check:
+Given a code, after lowercasing and the §3.3 hex-safety check (run on the
+separator-stripped form, §3.4):
 
-1. Match against the three-word grammar; else the two-word grammar; else it is
-   not a commitword.
+1. Match against the three-word grammar; else the two-word grammar (both
+   permitting optional boundary separators, §3.4); else it is not a commitword.
 2. Recover `y, k` (and `m`) via §4.2.
 3. Compute the expected SHA prefix as a single integer:
 
@@ -370,9 +401,11 @@ matters.
 
 The portable, testable surface is the **decoder/verifier**:
 
-- A conformant **decoder** MUST: lowercase input; reject all-`[0-9a-f]` strings
-  (§3.3); accept exactly the two grammars (§3.1); unpack numbers per §4.2; and
-  compute `(total, expected)` per §5.1 using the agreed hash. No wordlist needed.
+- A conformant **decoder** MUST: lowercase input; strip optional boundary
+  separators and reject all-`[0-9a-f]` strings on the stripped form (§3.3, §3.4);
+  accept the two grammars with optional boundary separators (§3.1, §3.4); unpack
+  numbers per §4.2; and compute `(total, expected)` per §5.1 using the agreed
+  hash. No wordlist needed.
 - A conformant **verifier** MUST report a match iff `sha_to_bits(candidate,
   total) == expected` (§5.2).
 - A **producer/minter** need only emit codes that a conformant decoder accepts
