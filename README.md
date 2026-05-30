@@ -57,23 +57,25 @@ hex range (`g–z`), so a commitword can never be confused with a raw SHA.
 
 Python 3, standard library only. No install step.
 
-**Mint** the shortest unique code for a commit or ref:
+**Mint** the shortest unique code for a commit or ref. The repo is given with
+`-C PATH` (or its alias `--repo PATH`), just like `git -C`; it defaults to the
+current directory.
 
 ```sh
-./commitmint.py <sha-or-ref> --repo /path/to/repo
+./commitmint.py <sha-or-ref> -C /path/to/repo
 # e.g.
-./commitmint.py HEAD --repo .
-./commitmint.py v3.21 --repo ~/repo
+./commitmint.py HEAD -C .
+./commitmint.py v3.21 -C ~/repo
 # force a three-word code for extra future-uniqueness headroom
-./commitmint.py HEAD --repo . --min-words 3
+./commitmint.py HEAD -C . --min-words 3
 # or grow a third word only when two words can't clear the margin floor
-./commitmint.py HEAD --repo . --reach-floor
+./commitmint.py HEAD -C . --reach-floor
 # decorate the output with readability separators (-, _, or .): what-9-plug
-./commitmint.py HEAD --repo . --sep -
+./commitmint.py HEAD -C . --sep -
 # don't like the default word pair? list alternatives and pick the least awkward
-./commitmint.py HEAD --repo . --list        # indexed, ranked candidates
-./commitmint.py HEAD --repo . --choose 3    # emit the candidate at index 3
-./commitmint.py HEAD --repo . -i            # pick interactively (arrow keys + Enter)
+./commitmint.py HEAD -C . --list        # indexed, ranked candidates
+./commitmint.py HEAD -C . --choose 3    # emit the candidate at index 3
+./commitmint.py HEAD -C . -i            # pick interactively (arrow keys + Enter)
 ```
 
 A commit usually has *many* valid commitwords — the minter just picks the
@@ -85,7 +87,7 @@ shows its **bit strength** — the one axis that
 actually differs (more bits = more future-collision headroom):
 
 ```
-$ ./commitmint.py HEAD --repo ~/repo --list 5
+$ ./commitmint.py HEAD -C ~/repo --list 5
 # ranked best-first (index 0 = default pick); margin floor 23 bits …  ← on stderr
 0  mothers19forces      23 bits
 1  mothers19intention   23 bits
@@ -93,14 +95,14 @@ $ ./commitmint.py HEAD --repo ~/repo --list 5
 3  your1pays            21 bits
 4  hacker1pays          21 bits
 
-$ ./commitmint.py HEAD --repo ~/repo --choose 3      # emit just that one
+$ ./commitmint.py HEAD -C ~/repo --choose 3      # emit just that one
 your1pays
 ```
 
 Or skip the index step entirely with `-i`, an interactive arrow-key picker
 (↑/↓ to move, Enter to select, `q` to cancel) that draws its menu on the
 terminal and prints just the chosen code to stdout — so `code=$(./commitmint.py
-HEAD --repo . -i)` still captures only the code.
+HEAD -C . -i)` still captures only the code.
 
 `--choose` prints the bare code (scriptable); the ordering/floor note goes to
 stderr; and `--sep` decorates every line (`--list --sep -` →
@@ -109,20 +111,30 @@ stderr; and `--sep` decorates every line (`--list --sep -` →
 **Resolve** a code back to its commit(s):
 
 ```sh
-./commitfind.py inner19sage --repo ~/repo
-# searches all refs by default; --head-only restricts to HEAD's history
+./commitfind.py inner19sage -C ~/repo
+# searches all refs by default (--all); --head-only narrows to HEAD's history
 # optional -, _, or . separators are ignored -- inner-19-sage resolves the same
-./commitfind.py inner-19-sage --repo ~/repo
+./commitfind.py inner-19-sage -C ~/repo
 ```
 
-Resolving a short handle to a unique commit is not new — git already does it
-natively for abbreviated SHAs, tags, branches, and `name-rev`. `commitfind`
-applies the same idea to a word code: it scans the repo, matches the bits each
-word pins, and confirms a single commit. It exists only because git doesn't
-*yet* understand the commitword format — a commitword isn't a hex prefix, so
-`git show inner19sage` can't resolve it the way `git show d2a6dcb` can. If git
-learned the format, resolution would be built in and `commitfind` would be
-unnecessary, exactly as abbreviated-SHA lookup already is.
+Resolving a short handle to a commit is not new — git already does it natively
+for abbreviated SHAs, tags, branches, and `name-rev`. The closest analogue is
+`git show <prefix>`: `commitfind` is to a word code what short-SHA lookup is to
+a hex prefix. It scans the repo, matches the bits each word pins, and confirms a
+single commit. It exists only because git doesn't *yet* understand the
+commitword format — a commitword isn't a hex prefix, so `git show inner19sage`
+can't resolve it the way `git show d2a6dcb` can. If git learned the format,
+resolution would be built in and `commitfind` would be unnecessary, exactly as
+abbreviated-SHA lookup already is.
+
+That analogy also explains the **search scope**. `git show <prefix>`
+disambiguates a short SHA *repo-wide*, not just within your current branch — and
+`commitfind` does the same, defaulting to **all refs** (`--all`) to reproduce
+the scope `commitmint` minted over, so it inherits the "exactly one commit"
+guarantee. (This inverts `git log`, which defaults to HEAD — but resolving a
+handle is a `git show` job, not a `git log` one.) `--head-only` narrows to HEAD's
+history: a safe subset that never yields a false match but may find nothing if
+the commit lives on another branch.
 
 **Standalone encode** (no repo — joint-maximizes bits, does not guarantee
 repo-uniqueness):
@@ -185,9 +197,12 @@ third word, e.g. `threats49silver4carbon`.
   clone, or commits added later — can collide, exactly as an abbreviated SHA
   (`d2a6dcb`) that is unique in your clone today can turn ambiguous in another
   clone or as history grows. The uniqueness is about on par with git's
-  abbreviated SHAs. To resolve deterministically, search a scope that includes
-  the commit and is at least as wide as the mint scope: `commitfind` defaults to
-  all refs to match the minter, and `--head-only` narrows it.
+  abbreviated SHAs. To resolve deterministically, search the scope the minter
+  used — all refs — wide enough to include the commit yet *no wider*, so nothing
+  the minter never checked can slip in as a false match. `commitfind` defaults to
+  exactly that (`--all`); `--head-only` safely *narrows* it (handy when the
+  commit is on HEAD), whereas searching *wider* than the mint scope is what risks
+  ambiguity.
 
 ## Configuration
 

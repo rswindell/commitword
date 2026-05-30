@@ -342,7 +342,8 @@ def interactive_pick(rows, header):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("sha", help="commit SHA or ref to mint")
-    ap.add_argument("--repo", default=".", help="path to git repo (default: cwd)")
+    ap.add_argument("-C", "--repo", default=".",
+                    help="path to git repo (like git -C; default: cwd)")
     ap.add_argument("--growth", type=float, default=16.0,
                     help="repo-growth factor for the margin floor (default 16)")
     ap.add_argument("--pmax", type=float, default=0.1,

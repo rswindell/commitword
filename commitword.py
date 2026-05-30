@@ -14,6 +14,7 @@ the words and verifies against a candidate SHA. Repo-aware minting lives in
 commitmint.py; reverse lookup in commitfind.py.
 """
 
+import argparse
 import hashlib
 import os
 import re
@@ -276,16 +277,29 @@ def decode_and_verify(encoded, sha_hex):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("usage: commitword.py <sha-hex> [<sha-hex> ...]", file=sys.stderr)
-        sys.exit(1)
+    ap = argparse.ArgumentParser(
+        description="Standalone commitword encoder: render each commit SHA (hex) "
+                    "as a word code. No repo and no uniqueness guarantee -- it just "
+                    "joint-maximizes the pinned bits, always as a two-word code "
+                    "(the rare three-word form exists only to keep a repo-minted "
+                    "code unique, so it comes from commitmint.py). Use commitmint.py "
+                    "for repo-unique codes and commitfind.py to resolve one.")
+    ap.add_argument("sha", nargs="+", help="commit SHA(s) in hex to encode")
+    args = ap.parse_args()
+
     words = load_words()
     rank = {w: i for i, w in enumerate(words)}
     whash = word_hashes(words)
     print(f"# loaded {len(words)} words ({HASH_NAME})", file=sys.stderr)
-    for sha in sys.argv[1:]:
+    rc = 0
+    for sha in args.sha:
         sha = sha.lower()
-        result = encode(sha, words, rank, whash)
+        try:
+            result = encode(sha, words, rank, whash)
+        except ValueError:                      # not valid hex (e.g. odd length)
+            print(f"error: {sha!r} is not a hex SHA", file=sys.stderr)
+            rc = 2
+            continue
         if result is None:
             print(f"{sha[:12]}...\tNO_ENCODING")
             continue
@@ -293,6 +307,7 @@ def main():
         code = format_two(w1, y, w2, k)
         ok = decode_and_verify(code, sha)
         print(f"{sha[:12]}...\t{code}\t(y={y}, k={k}, total={y + k})\tverify={'OK' if ok else 'FAIL'}")
+    sys.exit(rc)
 
 
 if __name__ == "__main__":

@@ -368,10 +368,12 @@ the default pick.
 
 A commitword identifies a commit only **relative to a repository and a ref scope**.
 The reference minter guarantees uniqueness over **all refs**
-(`git rev-list --all`); resolve (`commitfind.py`) over the **same** scope to obtain
-the single intended match. Restricting the search to a narrower scope (e.g.
-HEAD-only) still yields at most that match but may find none if the commit is not
-reachable there.
+(`git rev-list --all`); resolve (`commitfind.py --all`, the default) over the
+**same** scope to obtain the single intended match — the word-code counterpart of
+`git show <prefix>` disambiguating a short SHA repo-wide (not just within HEAD's
+history). *Narrowing* the search (e.g. `--head-only`) still yields at most that
+match but may find none if the commit is not reachable there; searching **wider**
+than the mint scope can introduce false matches the minter never checked against.
 
 Outside the repository it was minted against, a code is only *probabilistically*
 unique: it pins `total` bits, so two unrelated commits collide with probability
