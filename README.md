@@ -248,11 +248,10 @@ third word, e.g. `threats-49-silver-4-carbon`.
   ignored: `inner-19-sage` == `inner_19_sage` == `inner19sage`. (`.` is not a
   separator — it clashes with git's `a..b` ranges.) Display only; the canonical
   (minted) form carries none. Mint a decorated form with `--sep`.
-- **Hash-bound** — resolving a code depends only on the *hash* (default sha1); a
-  resolver hashes the literal words and needs **no wordlist**. The wordlist only
-  affects which codes the *minter* picks. So `COMMITWORD_LIST` doesn't affect
-  portability, but `COMMITWORD_HASH` does — codes minted under a non-default hash are
-  only resolvable with that same hash. See the spec.
+- **Hash-bound** — resolving a code depends only on the *hash* (default sha1): a
+  resolver hashes the literal words and needs **no wordlist**, so only a
+  non-default `COMMITWORD_HASH` affects portability (see
+  [Configuration](#configuration)).
 - **Lossy** — you find the commit by searching a repo; you cannot reconstruct a
   full SHA from the code alone.
 - **One-way handle, not a stored name** — resolving a code to its commit is exact

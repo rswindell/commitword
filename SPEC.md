@@ -110,7 +110,7 @@ d68b9a8301a0b34c5c4e7bac8c63c7078f55b93536fda17f37b2d47a2feb8dab
 ```
 two-word    = WORD NUM WORD
 three-word  = WORD NUM WORD NUM WORD
-WORD        = 1*( "a"…"z" )        ; in practice 3–10 letters (§2.3)
+WORD        = 1*( "a"…"z" )        ; in practice 3–10 letters (§2.2)
 NUM         = 1*( "0"…"9" )        ; plain integer, no leading-zero padding
 ```
 
@@ -268,9 +268,8 @@ separator-stripped form, §3.4):
    where `top(h, n)` is the first `n` bits of that word's hash (§4.3).
 4. Result is the pair `(total, expected)` with `total = y + k [+ m]`.
 
-`hash` here is the agreed hash (§2.1). The words need not be in the wordlist to
-decode — decoding is purely arithmetic over the literal words' hashes, so a
-resolver needs no wordlist.
+`hash` here is the agreed hash (§2.1); decoding is purely arithmetic over the
+literal words' hashes, needing no wordlist (§2.2).
 
 ### 5.2 Verify against a candidate SHA
 
@@ -318,8 +317,7 @@ reach the floor. **Uniqueness is the only hard requirement.**
 The reference minter can optionally promote the floor to a gate
 (`commitmint.py --reach-floor`): when the best unique two-word code is below the
 floor, it grows a third word to climb toward it, falling back to the two-word
-code if no three-word code can be built. This is a producer-side preference and
-does not affect decoding (§5).
+code if no three-word code can be built.
 
 ### 6.3 Two-word search
 
@@ -345,8 +343,7 @@ a third word pinning the next `m` bits (`m` chosen as the best available match,
 
 The reference minter also takes this branch unconditionally when asked for a
 three-word code (`commitmint.py --min-words 3`), trading the extra word for more
-identifying bits of future-collision headroom. This is a producer-side option
-only; it does not affect decoding (§5).
+identifying bits of future-collision headroom.
 
 ### 6.5 Self-verification
 
@@ -441,7 +438,7 @@ The portable, testable surface is the **decoder/verifier**:
   separators and reject all-`[0-9a-f]` strings on the stripped form (§3.3, §3.4);
   accept the two grammars with optional boundary separators (§3.1, §3.4); unpack
   numbers per §4.2; and compute `(total, expected)` per §5.1 using the agreed
-  hash. No wordlist needed.
+  hash.
 - A conformant **verifier** MUST report a match iff `sha_to_bits(candidate,
   total) == expected` (§5.2).
 - A **producer/minter** need only emit codes that a conformant decoder accepts
