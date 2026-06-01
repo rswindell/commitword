@@ -10,8 +10,8 @@ threats-49-silver-4-carbon  →  a three-word code (rare; for the few that need 
 
 A *commitword* is an all-lowercase code like `inner-19-sage`: two (or, rarely,
 three) words joined by a number. The dashes are optional readability — the
-canonical minted form is `inner19sage`, and `-`, `_`, or `.` at the boundaries
-all resolve identically. It is **memorable**, **case-insensitive**,
+canonical minted form is `inner19sage`, and `-` or `_` at the boundaries
+resolve identically. It is **memorable**, **case-insensitive**,
 **self-verifying**, and — minted against a repo — **guaranteed to resolve to
 exactly one commit** there as of mint time (the same kind of guarantee an
 abbreviated SHA carries; see [Guarantees and caveats](#guarantees-and-caveats)).
@@ -73,7 +73,7 @@ current directory.
 # or grow a third word only when two words can't clear the margin floor
 ./commitmint.py HEAD -C . --reach-floor
 # decorate the output with a readability separator (bare --sep = '-'): what-9-plug
-./commitmint.py HEAD -C . --sep             # or --sep _  /  --sep .
+./commitmint.py HEAD -C . --sep             # or --sep _
 # don't like the default word pair? list alternatives and pick the least awkward
 ./commitmint.py HEAD -C . --list        # indexed, ranked candidates
 ./commitmint.py HEAD -C . --choose 3    # emit the candidate at index 3
@@ -115,7 +115,7 @@ stderr; and `--sep` decorates every line (`--list --sep` →
 ```sh
 ./commitfind.py inner19sage -C ~/repo
 # searches all refs by default (--all); --head-only narrows to HEAD's history
-# optional -, _, or . separators are ignored -- inner-19-sage resolves the same
+# optional - or _ separators are ignored -- inner-19-sage resolves the same
 ./commitfind.py inner-19-sage -C ~/repo
 ```
 
@@ -176,9 +176,10 @@ third word, e.g. `threats-49-silver-4-carbon`.
 - **Self-verifying** — a code carries the bits it claims; given a candidate SHA
   you can confirm the match offline, no repo needed.
 - **Case-insensitive** — `Inner19Sage` == `inner19sage`.
-- **Separator-tolerant** — optional `-`, `_`, or `.` at word/number boundaries are
-  ignored: `inner-19-sage` == `inner.19.sage` == `inner19sage`. Display only; the
-  canonical (minted) form carries none. Mint a decorated form with `--sep`.
+- **Separator-tolerant** — optional `-` or `_` at word/number boundaries are
+  ignored: `inner-19-sage` == `inner_19_sage` == `inner19sage`. (`.` is not a
+  separator — it clashes with git's `a..b` ranges.) Display only; the canonical
+  (minted) form carries none. Mint a decorated form with `--sep`.
 - **Hash-bound** — resolving a code depends only on the *hash* (default sha1); a
   resolver hashes the literal words and needs **no wordlist**. The wordlist only
   affects which codes the *minter* picks. So `COMMITWORD_LIST` doesn't affect

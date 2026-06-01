@@ -141,9 +141,11 @@ never mis-parsed as word/number/word. Producers MUST guarantee this invariant
 
 ### 3.4 Separators (optional, ignored)
 
-For readability a code MAY carry a single optional separator — one of `-`, `_`,
-or `.` — at each boundary between a word and an adjacent number. `what-9-plug`,
-`what.9.plug`, `what-9plug`, and `what9plug` are the same code.
+For readability a code MAY carry a single optional separator — `-` or `_` — at
+each boundary between a word and an adjacent number. `what-9-plug`, `what_9_plug`,
+`what-9plug`, and `what9plug` are the same code. (`.` is deliberately **not** a
+separator: it collides with git's revision syntax — ranges `a..b`, `a...b`,
+pathspecs — so a commitword never contains one.)
 
 Separators are cosmetic input, like letter case (§3.2) — not part of the value.
 A decoder MUST:
@@ -158,8 +160,8 @@ A decoder MUST:
 
 Anchored, the accepted forms are:
 
-- two-word: `^[a-z]+[-_.]?\d+[-_.]?[a-z]+$`
-- three-word: `^[a-z]+[-_.]?\d+[-_.]?[a-z]+[-_.]?\d+[-_.]?[a-z]+$`
+- two-word: `^[a-z]+[-_]?\d+[-_]?[a-z]+$`
+- three-word: `^[a-z]+[-_]?\d+[-_]?[a-z]+[-_]?\d+[-_]?[a-z]+$`
 
 The **canonical** form carries no separators. Codes are stored, compared, and
 transported separator-free and lowercased; a producer MUST NOT emit separators in
@@ -417,12 +419,11 @@ matters.
 
 ### 8.4 Separators
 
-`inner-19-sage`, `inner_19_sage`, and `inner.19.sage` strip and parse to the same
+`inner-19-sage`, `inner_19_sage`, and `inner-19sage` strip and parse to the same
 tokens as §8.1 (`w1 = inner`, `N1 = 19`, `w2 = sage`) and decode to the identical
 `(total = 23, expected = 6902638)`. By contrast `-inner19sage`, `inner19sage-`,
-`wh-at9plug`, and `dead-12-beef` are **not** commitwords — a separator that is
-leading, trailing, or intra-token, or a string that is all-hex once stripped
-(§3.4).
+`wh-at9plug`, `inner.19.sage` (`.` is not a separator), and `dead-12-beef` (all-hex
+once stripped) are **not** commitwords (§3.4).
 
 ---
 

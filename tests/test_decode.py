@@ -49,7 +49,7 @@ def _decorate(code, sep):
 def test_decode_accepts_boundary_separators():
     w1, y, w2, k = sw.encode(SHA, WORDS)
     code = sw.format_two(w1, y, w2, k)
-    for sep in ("-", "_", "."):
+    for sep in ("-", "_"):
         deco = _decorate(code, sep)
         assert deco != code
         assert sw.decode_to_bits(deco) == sw.decode_to_bits(code)
@@ -65,8 +65,8 @@ def test_decode_accepts_separators_three_word():
     m, w3c = sw.plan_third(SHA, WORDS, WHASH, y, k)
     w1, w2, w3 = sw.select_words([w1c, w2c, w3c], rank)
     code = sw.format_three(w1, y, w2, k, w3, m)
-    deco = _decorate(code, ".")
-    assert _re.fullmatch(r"[a-z]+\.\d+\.[a-z]+\.\d+\.[a-z]+", deco)
+    deco = _decorate(code, "_")
+    assert _re.fullmatch(r"[a-z]+_\d+_[a-z]+_\d+_[a-z]+", deco)
     assert sw.decode_and_verify(deco, SHA)
 
 
@@ -82,15 +82,24 @@ def test_decode_rejects_misplaced_separators():
 
 def test_decode_rejects_hex_lookalike_with_separators():
     # strips to all-hex -> still a raw SHA prefix, not a commitword
-    for s in ("dead-12-beef", "dead_12_beef", "dead.12.beef"):
+    for s in ("dead-12-beef", "dead_12_beef"):
         assert sw.decode_to_bits(s) is None
         assert sw.decode_and_verify(s, SHA) is False
+
+
+def test_dot_is_not_a_separator():
+    # `.` was dropped as a separator (it clashes with git's a..b ranges), so a
+    # dot-decorated code is not a commitword at all.
+    w1, y, w2, k = sw.encode(SHA, WORDS)
+    code = sw.format_two(w1, y, w2, k)
+    assert sw.decode_to_bits(code) is not None            # canonical still decodes
+    assert sw.decode_to_bits(_decorate(code, ".")) is None  # dotted does not
 
 
 def test_separate_roundtrips():
     w1, y, w2, k = sw.encode(SHA, WORDS)
     code = sw.format_two(w1, y, w2, k)
-    for sep in ("-", "_", "."):
+    for sep in ("-", "_"):
         deco = sw.separate(code, sep)
         assert deco == _decorate(code, sep)
         assert sw.decode_to_bits(deco) == sw.decode_to_bits(code)

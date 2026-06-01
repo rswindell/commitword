@@ -354,7 +354,7 @@ def main():
     ap.add_argument("--reach-floor", action="store_true",
                     help="grow a third word when a two-word code can't clear the "
                          "margin floor (default: floor is a soft preference)")
-    ap.add_argument("--sep", nargs="?", const="-", choices=("-", "_", "."),
+    ap.add_argument("--sep", nargs="?", const="-", choices=("-", "_"),
                     default=None,
                     help="insert this separator at word/number boundaries for "
                          "readability, e.g. what-9-plug; bare --sep means '-' "

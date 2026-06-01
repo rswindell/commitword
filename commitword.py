@@ -220,11 +220,11 @@ def separate(code, sep):
 # form has none. The anchored grammars accept only a single boundary separator
 # -- leading, trailing, doubled, and intra-token separators do not match, so the
 # input is "not a commitword" (SPEC §3.4).
-_SEP = "-_."
+_SEP = "-_"
 _STRIP_SEP = str.maketrans("", "", _SEP)
 
-_RE_TWO = re.compile(r"^([a-z]+)[-_.]?(\d+)[-_.]?([a-z]+)$")
-_RE_THREE = re.compile(r"^([a-z]+)[-_.]?(\d+)[-_.]?([a-z]+)[-_.]?(\d+)[-_.]?([a-z]+)$")
+_RE_TWO = re.compile(r"^([a-z]+)[-_]?(\d+)[-_]?([a-z]+)$")
+_RE_THREE = re.compile(r"^([a-z]+)[-_]?(\d+)[-_]?([a-z]+)[-_]?(\d+)[-_]?([a-z]+)$")
 
 
 def _top(h, n):
