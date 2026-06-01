@@ -1,33 +1,35 @@
 #!/usr/bin/env bash
-# Install the `git word` subcommand by symlinking git-word onto your PATH.
+# Install the `git word` subcommand by symlinking the bridge onto your PATH.
 #
-#   ./install.sh                enable `git word`
-#   ./install.sh cw             also enable `git cw`  (extra verbs as args)
-#   ./install.sh --dir ~/bin    choose the target directory
-#   ./install.sh --uninstall    remove every git-* symlink that points here
+#   ./install.sh             enable `git word` (auto: Python if present, else Perl)
+#   ./install.sh --perl      Perl consumer build: resolve + pass-through, no mint;
+#                            runs on a bare Git install (no Python needed)
+#   ./install.sh --python    force the Python build (full mint / resolve / pass-through)
+#   ./install.sh cw          also enable `git cw` (extra verbs as args)
+#   ./install.sh --dir ~/bin choose the target directory
+#   ./install.sh --uninstall remove every git-* symlink that points here
 #
-# Safe: it never clobbers a real file, re-points an existing symlink of ours,
-# and reports exactly what it did.
+# Safe: never clobbers a real file, re-points an existing symlink of ours, and
+# reports what it did.
 set -eu
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
-SRC="$REPO/git-word"
+PY="$REPO/git-word"
+PL="$REPO/git-word.pl"
 
 die() { echo "install.sh: $*" >&2; exit 1; }
 on_path() { case ":$PATH:" in *":$1:"*) return 0 ;; *) return 1 ;; esac; }
-
-usage() {
-    sed -n '2,10p' "$0" | sed 's/^#\s\{0,1\}//'
-}
-
-[ -e "$SRC" ] || die "git-word not found next to this script ($SRC)"
+usage() { sed -n '2,13p' "$0" | sed 's/^#\s\{0,1\}//'; }
 
 uninstall=0
+backend=""
 dir=""
 verbs=()
 while [ $# -gt 0 ]; do
     case "$1" in
         --uninstall) uninstall=1 ;;
+        --perl)      backend=perl ;;
+        --python)    backend=python ;;
         --dir) shift; [ $# -gt 0 ] || die "--dir needs a directory"; dir="$1" ;;
         --dir=*) dir="${1#--dir=}" ;;
         -h|--help) usage; exit 0 ;;
@@ -49,13 +51,29 @@ if [ "$uninstall" = 1 ]; then
     removed=0
     for f in "$dir"/git-*; do
         [ -L "$f" ] || continue
-        if [ "$(readlink -f "$f")" = "$(readlink -f "$SRC")" ]; then
+        t="$(readlink -f "$f")"
+        if [ "$t" = "$(readlink -f "$PY")" ] || [ "$t" = "$(readlink -f "$PL")" ]; then
             rm -f "$f"; echo "removed   git ${f##*/git-}  ($f)"; removed=1
         fi
     done
     [ "$removed" = 1 ] || echo "nothing of ours to remove in $dir"
     exit 0
 fi
+
+# Pick the backend (Python = full; Perl = consumer, no Python needed).
+if [ -z "$backend" ]; then
+    if   command -v python3 >/dev/null 2>&1; then backend=python
+    elif command -v perl    >/dev/null 2>&1; then backend=perl
+    else die "neither python3 nor perl found; install one, or pass --python/--perl"
+    fi
+fi
+case "$backend" in
+    python) SRC="$PY"; rt=python3; note="full mint / resolve / pass-through" ;;
+    perl)   SRC="$PL"; rt=perl;    note="resolve + pass-through (consumer; no mint)" ;;
+esac
+[ -e "$SRC" ] || die "$SRC not found"
+command -v "$rt" >/dev/null 2>&1 \
+    || echo "warning: '$rt' is not on PATH; the $backend build won't run until it is" >&2
 
 mkdir -p "$dir"
 names=("word")
@@ -68,7 +86,7 @@ for name in "${names[@]}"; do
         continue
     fi
     ln -sf "$SRC" "$target"
-    echo "installed git $name  ->  $target"
+    echo "installed git $name  ->  $target  [$backend: $note]"
 done
 
 echo

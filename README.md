@@ -175,6 +175,20 @@ that.)
 git config --global alias.word '!/abs/path/to/git-word'   # use the real path
 ```
 
+**Without Python** (e.g. Windows, where Git bundles Perl but not Python), install
+the Perl *consumer* build — `git-word.pl` resolves and passes through commitwords
+using only Perl + git, no wordlist:
+
+```sh
+./install.sh --perl     # (also auto-selected when Python is absent)
+# on native Windows (cmd/PowerShell), a git alias is the most reliable route:
+git config --global alias.word '!perl "/c/path/to/git-word.pl"'
+```
+
+It does everything a consumer needs — `git word <commitword>`, `git word show
+<cw>`, ranges — but can't **mint**; create codes with `commitmint.py` on a
+machine that has Python (the codes resolve anywhere).
+
 `git word` is bidirectional, auto-detecting direction from its first argument:
 
 ```sh
@@ -277,6 +291,8 @@ portability: codes minted under a non-default hash resolve only under that hash.
 - `commitword.py` — the encode/decode/verify library + a standalone CLI.
 - `commitmint.py` — repo-aware minter (the main entry point).
 - `commitfind.py` — reverse lookup (code → commit).
+- `git-word` — `git word` bridge (mint/resolve/pass-through); `install.sh` puts it on PATH.
+- `git-word.pl` — Perl consumer build of the bridge (resolve + pass-through, no Python).
 - `curated.txt` — the 6,350-word canonical wordlist.
 - `curate.py` / `blocklist.txt` — regenerate `curated.txt` (curation + exclusions).
 
