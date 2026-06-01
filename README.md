@@ -148,15 +148,31 @@ repo-uniqueness):
 ## Git integration
 
 `git-word` folds the mint/resolve pair into a single native-feeling git
-subcommand, `git word`. Install it either way:
+subcommand, `git word`. Easiest:
 
 ```sh
-# as a git subcommand -- put it on your PATH; the symlink name is the verb:
-ln -s "$PWD/git-word" ~/.local/bin/git-word    # then: git word ...
-ln -s "$PWD/git-word" ~/.local/bin/git-w       # ...or shorter: git w ...
+./install.sh            # symlinks git-word onto your PATH  ->  git word ...
+./install.sh cw         # also add a short `git cw` (safer than `git w`)
+./install.sh --uninstall
+```
 
-# or, with no PATH changes, as a git alias:
-git config --global alias.word '!/abs/path/to/git-word'
+Or by hand — symlink it into a directory on your PATH (the symlink *name* is the
+verb):
+
+```sh
+ln -s "$PWD/git-word" ~/.local/bin/git-word    # then: git word ...
+```
+
+Or, with no PATH changes, as a **git alias**. The `!` makes git run git-word as
+a shell command and append your arguments, so `git word show inner-19-sage`
+becomes `git-word show inner-19-sage` — mint, resolve, and pass-through all work.
+(Aliases resolve before PATH and can't shadow a built-in. One wrinkle: `!`-aliases
+run from the repo's top level, so a *relative path* you pass through is relative
+to the repo root, not your subdir; the symlink route runs in your cwd and avoids
+that.)
+
+```sh
+git config --global alias.word '!/abs/path/to/git-word'   # use the real path
 ```
 
 `git word` is bidirectional, auto-detecting direction from its first argument:
