@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+"""git word -- a bidirectional commitword bridge for the git command line.
+
+    git word                       mint the commitword for HEAD
+    git word <commit-ish>          mint the commitword for a commit (SHA, tag, HEAD~3, ...)
+    git word <commitword>          resolve a commitword to its commit's FULL sha
+    git word <git-command> [args]  run a git command, resolving commitword args first
+
+Direction is auto-detected from the first argument: a commitword is resolved, a
+git revision is minted, and anything else is treated as a git subcommand whose
+commitword arguments are resolved before it runs -- so these are equivalent:
+
+    git show $(git word inner-19-sage)
+    git word show inner-19-sage
+
+Resolving prints the bare full sha, so a commitword also drops into any command
+by substitution. Force mint/resolve with --mint / --find. When minting or
+resolving, other flags pass through to commitmint.py / commitfind.py, e.g.
+`git word HEAD --list`, `git word HEAD --sep`, `git word inner-19-sage --head-only`.
+
+Installed as a git subcommand: put this file on PATH as `git-word` (the symlink
+name sets the verb -- `git-w` gives `git w show inner-19-sage`), or wire a git
+alias -- see the README "Git integration".
+"""
+
+import os
+import re
+import subprocess
+import sys
+
+HERE = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, HERE)
+import commitword as sw                                  # noqa: E402  (after sys.path)
+
+# Long options that always consume a following value, so the scan for the
+# subject (the first bareword) skips their values. --sep/--list take an optional
+# value and are intentionally NOT listed; put the subject first to avoid ambiguity.
+VALUE_OPTS = {"-C", "--repo", "--growth", "--pmax", "--choose", "--min-words"}
+
+USAGE = ("usage: git word [--mint|--find] [<commit-ish>|<commitword>] [flags...]\n"
+         "   or: git word <git-command> [args... including commitwords]")
+
+
+def find_subject(args):
+    """First bareword in `args` that isn't an option or an option's value."""
+    i = 0
+    while i < len(args):
+        a = args[i]
+        if a == "--":
+            return args[i + 1] if i + 1 < len(args) else None
+        if a in VALUE_OPTS:
+            i += 2                       # skip the option and its value
+            continue
+        if a.startswith("-") and a != "-":
+            i += 1                       # a flag (or --opt=val); not the subject
+            continue
+        return a                         # a bareword: the commit / commitword
+    return None
+
+
+def exec_tool(name, args):
+    """Replace this process with `name` (commitmint.py / commitfind.py)."""
+    path = os.path.join(HERE, name)
+    os.execv(sys.executable, [sys.executable, path, *args])
+
+
+def repo_from(args):
+    """The -C/--repo value in `args` (so the rev check and commitword resolution
+    use the repo the user pointed at), else the current directory."""
+    for i, a in enumerate(args):
+        if a in ("-C", "--repo"):
+            return args[i + 1] if i + 1 < len(args) else "."
+        if a.startswith("--repo="):
+            return a.split("=", 1)[1]
+        if a.startswith("-C") and len(a) > 2:
+            return a[2:]
+    return "."
+
+
+def is_git_rev(token, repo):
+    """True if `token` names a commit in `repo` (so it should be minted)."""
+    r = subprocess.run(["git", "-C", repo, "rev-parse", "--verify", "--quiet",
+                        token + "^{commit}"], capture_output=True, text=True)
+    return r.returncode == 0
+
+
+def resolve_sha(token, repo):
+    """Full SHA a commitword resolves to (first match), or None."""
+    r = subprocess.run([sys.executable, os.path.join(HERE, "commitfind.py"),
+                        token, "-C", repo, "--sha"], capture_output=True, text=True)
+    out = r.stdout.split()
+    return out[0] if out else None
+
+
+# A run of commitword-legal characters (letters, digits, and the `-`/`_`
+# separators). `.` is not a commitword character, so it naturally delimits --
+# which is what lets a range like `<cw>..<cw>` resolve as two tokens.
+_CWORD_RUN = re.compile(r"[A-Za-z0-9_-]+")
+
+
+def translate_arg(arg, repo):
+    """Replace each commitword-shaped run in `arg` that actually resolves to a
+    commit with its full SHA -- so rev-expressions work: `<cw>..<cw>`, `<cw>~3`,
+    `<cw>^`, `<cw>:path`. A run that git already understands as a revision (a
+    ref, SHA, or HEAD) is left untouched, so real refs always win."""
+    def repl(m):
+        tok = m.group(0)
+        if sw.decode_to_bits(tok) is None:        # not commitword-shaped
+            return tok
+        if is_git_rev(tok, repo):                 # a real ref/SHA -> git's
+            return tok
+        return resolve_sha(tok, repo) or tok      # resolve, else leave for git
+
+    return _CWORD_RUN.sub(repl, arg)
+
+
+def run_git(args, repo):
+    """Pass-through: run `git <args>`, resolving commitword tokens to SHAs first
+    (including inside rev-expressions). Put `-C <path>` before the subcommand,
+    as git itself requires."""
+    os.execvp("git", ["git", *[translate_arg(a, repo) for a in args]])
+
+
+def options_block(name, title):
+    """The `options:` section of a sub-tool's --help, minus the redundant
+    -h/--help line, so `git word --help` can show every pass-through flag (read
+    live, so it never drifts out of sync with the tools)."""
+    out = subprocess.run([sys.executable, os.path.join(HERE, name), "--help"],
+                         capture_output=True, text=True).stdout.splitlines()
+    try:
+        start = next(i for i, ln in enumerate(out) if ln.strip() == "options:")
+    except StopIteration:
+        return ""
+    kept = [ln for ln in out[start + 1:] if not ln.strip().startswith("-h, --help")]
+    return title + "\n" + "\n".join(kept)
+
+
+def main():
+    argv = sys.argv[1:]
+    if "-h" in argv or "--help" in argv:
+        print(USAGE + "\n\n" + __doc__.strip() + "\n")
+        print(options_block("commitmint.py",
+                            "mint flags (git word <commit-ish> ...):"))
+        print()
+        print(options_block("commitfind.py",
+                            "resolve flags (git word <commitword> ...):"))
+        return
+
+    force = None
+    passthrough = []
+    for a in argv:
+        if a == "--mint":
+            force = "mint"
+        elif a == "--find":
+            force = "find"
+        else:
+            passthrough.append(a)
+
+    subject = find_subject(passthrough)
+    repo = repo_from(passthrough)
+
+    if force == "find":
+        if subject is None:
+            sys.exit("git word: --find needs a commitword to resolve\n" + USAGE)
+        exec_tool("commitfind.py", [*passthrough, "--sha"])
+    if force == "mint":
+        exec_tool("commitmint.py", passthrough if subject else ["HEAD", *passthrough])
+
+    # Auto-detect direction from the first argument.
+    if subject is None:                                  # bare `git word` -> mint HEAD
+        exec_tool("commitmint.py", ["HEAD", *passthrough])
+    if sw.decode_to_bits(subject) is not None:           # a commitword -> resolve
+        exec_tool("commitfind.py", [*passthrough, "--sha"])
+    if is_git_rev(subject, repo):                        # a git revision -> mint
+        exec_tool("commitmint.py", passthrough)
+    run_git(passthrough, repo)                            # a git subcommand -> pass through
+
+
+if __name__ == "__main__":
+    main()

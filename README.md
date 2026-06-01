@@ -145,6 +145,44 @@ repo-uniqueness):
 ./commitword.py d2a6dcb27169796c
 ```
 
+## Git integration
+
+`git-word` folds the mint/resolve pair into a single native-feeling git
+subcommand, `git word`. Install it either way:
+
+```sh
+# as a git subcommand -- put it on your PATH; the symlink name is the verb:
+ln -s "$PWD/git-word" ~/.local/bin/git-word    # then: git word ...
+ln -s "$PWD/git-word" ~/.local/bin/git-w       # ...or shorter: git w ...
+
+# or, with no PATH changes, as a git alias:
+git config --global alias.word '!/abs/path/to/git-word'
+```
+
+`git word` is bidirectional, auto-detecting direction from its first argument:
+
+```sh
+git word                   # mint HEAD's commitword
+git word HEAD~3            # mint any commit-ish (SHA, tag, branch, ...)
+git word inner-19-sage     # resolve a commitword -> its full SHA
+```
+
+Because resolving prints a bare full SHA, a commitword drops into any git
+command — and `git word <git-command> …` does the substitution for you,
+resolving commitword arguments (including inside `a..b` ranges and `<cw>~3`
+suffixes) before running the real command:
+
+```sh
+git word show     inner-19-sage
+git word diff     fill-0-till..asking-9-move
+git word log --oneline inner-19-sage~5..
+git word cherry-pick   magic-28-moved
+```
+
+Real refs, SHAs, and `HEAD` always win, so only genuine commitwords are
+rewritten. Mint flags (`--list`, `--choose`, `-i`, `--sep`, …) and resolve flags
+(`--head-only`) pass straight through; `git word --help` lists them all.
+
 ## How a commitword reads
 
 At heart a commitword is just an **abbreviated-SHA prefix rendered as words**.

@@ -45,6 +45,9 @@ def main():
     scope.add_argument("--head-only", dest="head_only", action="store_true",
                        help="narrow the search to HEAD's history (a safe subset: "
                             "faster, and robust if other refs grew since minting)")
+    ap.add_argument("--sha", action="store_true",
+                    help="output only the matching full SHA(s), one per line, so "
+                         "the result composes: git show $(commitfind <code> --sha)")
     ap.set_defaults(head_only=False)
     args = ap.parse_args()
 
@@ -60,8 +63,14 @@ def main():
             matches.append((sha, subject))
 
     if not matches:
-        print(f"no matches (searched {total_bits}-bit pattern)")
+        print(f"no matches (searched {total_bits}-bit pattern)",
+              file=sys.stderr if args.sha else sys.stdout)
         sys.exit(1)
+
+    if args.sha:                       # bare full SHA(s) for shell composition
+        for sha, _subject in matches:
+            print(sha)
+        return
 
     print(f"# matched {total_bits} bits, {len(matches)} commit(s):")
     for sha, subject in matches:
