@@ -366,6 +366,12 @@ word pair. This is a producer-side convenience and does not affect the wire
 format or decoding (§5): any code it emits is conformant by the same rules as
 the default pick.
 
+Note that even the default pick is **not** a stable identifier for a commit: it
+depends on these producer choices and on repo size (the §6.2 margin floor rises
+as the repo grows), and the choice is recorded nowhere. Commit → commitword is
+therefore one-to-many and unrecoverable; only the reverse, code → commit (§7), is
+a stable function. There is no canonical commitword for a given commit.
+
 ## 7. Resolution and uniqueness (informative)
 
 A commitword identifies a commit only **relative to a repository and a ref scope**.

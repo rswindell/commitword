@@ -49,8 +49,8 @@ verifies it before handing it back.
 And unlike a git **tag** — the usual way to pin a friendly name on a commit — a
 commitword costs nothing to create or hand out: there's no ref to `git tag`,
 push, and have everyone fetch, and no namespace to clutter. It's *derived* from
-the SHA, so anyone with the repo recomputes the same code on demand — a nickname
-that already exists for every commit, not one you have to mint and distribute.
+the SHA, so there's nothing to store or distribute — you mint a code, say it, and
+anyone with the repo resolves it straight back to the commit.
 
 The words are pure `a–z` and every code carries at least one letter outside the
 hex range (`g–z`), so a commitword can never be confused with a raw SHA.
@@ -255,6 +255,13 @@ third word, e.g. `threats-49-silver-4-carbon`.
   only resolvable with that same hash. See the spec.
 - **Lossy** — you find the commit by searching a repo; you cannot reconstruct a
   full SHA from the code alone.
+- **One-way handle, not a stored name** — resolving a code to its commit is exact
+  and stable, but the reverse is not: a commit has *many* valid commitwords, and
+  which one you get depends on mint-time choices (`--min-words`, `--choose`, `-i`)
+  and on repo size (a larger repo pins more bits), with the choice recorded
+  nowhere. So there is no single canonical commitword for a commit, and you can't
+  recover the one someone used — you resolve the code they give you. (Codes
+  already in circulation keep resolving even as freshly-minted ones differ.)
 - **Not a security primitive** — a commitword pins only a prefix of bits (~23 for
   a two-word code), so it is *not* collision-resistant: an adversary can cheaply
   craft a commit that matches a given code (≈ `2^total` hashes — seconds for a
